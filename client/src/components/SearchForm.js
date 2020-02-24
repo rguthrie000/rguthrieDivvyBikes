@@ -4,12 +4,12 @@ import "./SearchForm.css";
 function SearchForm(props) {
   return (
     <>
-      <h6>{props.timeAndDate}</h6>
-    <div className="nav-button">
-      <button className="page-choice" onClick={props.whereAmI}>random</button>
-    </div>
+      <h6>{props.timeAndDate} {props.isWeekday? 'weekday':'weekend'}, {props.partOfDay}</h6>
     <form id="form-search">
         <div>
+          <div id="button-random">
+            <button className="btn btn-primary button-search" onClick={props.whereAmI}>random</button>
+          </div>  
             <input
             className="form-input"
             value={props.title}
@@ -18,8 +18,6 @@ function SearchForm(props) {
             placeholder={props.lat}
             onChange={props.handleFormChange}
             />
-        </div>
-        <div>
             <input
             className="form-input"
             value={props.author}
@@ -29,13 +27,14 @@ function SearchForm(props) {
             onChange={props.handleFormChange}
             />
         </div>
+        <p>{props.minStationDist} miles to:</p>
         <div>
             <input
             className="form-input"
             value={props.subject}
             name="subject"
             type="text"
-            placeholder={props.startStation}
+            placeholder={props.startStation+props.startName}
             onChange={props.handleFormChange}
             />
         </div>
@@ -45,13 +44,65 @@ function SearchForm(props) {
             value={props.subject}
             name="subject"
             type="text"
-            placeholder={props.endStation}
+            placeholder={props.endStation+props.endName}
             onChange={props.handleFormChange}
             />
         </div>
-        <button className="btn btn-primary button-search" 
-          onClick={props.handleFormSubmit}>Go!</button>
     </form>
+        <p>Use day and time?</p>
+        <div className="form-check">
+          <label>
+            <input
+              type="radio"
+              name="useTime"
+              value="yes"
+              className="form-check-input"
+              checked={props.useTime}
+              onChange={props.handleRadio}
+            />
+            yes
+          </label>
+        </div>
+        <div className="form-check">
+          <label>
+            <input
+              type="radio"
+              name="useTime"
+              value="no"
+              className="form-check-input"
+              checked={!props.useTime}
+              onChange={props.handleRadio}
+            />
+            no
+          </label>
+        </div>
+        <p>Use user profile?</p>
+        <div className="form-check">
+          <label>
+            <input
+              type="radio"
+              name="useProfile"
+              value="yes"
+              className="form-check-input"
+              checked={props.useProfile}
+              onChange={props.handleRadio}
+            />
+            yes
+          </label>
+        </div>
+        <div className="form-check">
+          <label>
+            <input
+              type="radio"
+              name="useProfile"
+              value="no"
+              className="form-check-input"
+              checked={!props.useProfile}
+              onChange={props.handleRadio}
+            />
+            no
+          </label>
+        </div>
     </>
   );
 }

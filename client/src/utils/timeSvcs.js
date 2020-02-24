@@ -5,21 +5,20 @@
 //
 //
 
-const DSTpast = [
-  1520755200000,  // '2018-03-11T08:00',
-  1541314800000,  // '2018-11-04T07:00',
-  1552204800000,  // '2019-03-10T08:00',
-  1572764400000,  // '2019-11-03T07:00'
-];
+// const DSTpast = [
+//   1520755200000,  // '2018-03-11T08:00',
+//   1541314800000,  // '2018-11-04T07:00',
+//   1552204800000,  // '2019-03-10T08:00',
+//   1572764400000,  // '2019-11-03T07:00'
+// ];
 const DSTfuture = [
   1583654400000,  // '2020-03-08T08:00',
   1604214000000   // '2020-11-01T07:00',
 ];
 
 module.exports = {
+
   getTimeStr : () => {
-  //  0   1  2   3      4        5         6       7      8
-  // Mon Feb 24 2020 04:37:02 GMT-0500 (Eastern Standard Time)
   let t = Date.now();
   if (t < DSTfuture[0]) {t -= 6*60*60000;} else
   if (t < DSTfuture[1]) {t -= 5*60*60000;}
@@ -28,22 +27,56 @@ module.exports = {
   return(d.slice(0,25) + ' CT');
 },
 
+getTimeFlags : (tStr) => {
+//  0    1  2   3      4     5 
+// Mon, 24 Feb 2020 14:37:02 CT
+  let tArr = tStr.split(' ');
+  let wkDay = false;
+  switch (tArr[0])
+  {
+    case "Mon,":
+    case "Tue,":
+    case "Wed,":
+    case "Thu,":
+    case "Fri,": wkDay =  true; break;
+    case "Sat,": 
+    case "Sun,": wkDay = false; break;
+    default: break;
+  }
+  let todArr = tArr[4].split(':');
+  let hr = todArr[0];
+  let isMorning   = false;
+  let isAfternoon = false;
+  let isEvening   = false;
+  if (hr <  5) {isEvening   = true;} else 
+  if (hr < 12) {isMorning   = true;} else
+  if (hr < 19) {isAfternoon = true;} else 
+               {isEvening   = true;}
+  return({
+    isWeekday   : wkDay, 
+    isMorning   : isMorning,
+    isAfternoon : isAfternoon,
+    isEvening   : isEvening
+  });
+
+},
+
 // makeLocalTime() uses the javascript Date and toUTCString() functions
 // to provide elements of date and time, as listed here for var
 // dateAndTime.
 makeLocalTime : (UTC,tzDelta) => {
-var dateAndTime =
-{
-  year           : "",
-  month          : "",
-  monthName      : "",
-  monthNameShort : "",
-  dayOfMonth     : "",
-  dayOfWeek      : "",
-  hour           : "",
-  minute         : "",
-  second         : ""
-}
+// var dateAndTime =
+// {
+//   year           : "",
+//   month          : "",
+//   monthName      : "",
+//   monthNameShort : "",
+//   dayOfMonth     : "",
+//   dayOfWeek      : "",
+//   hour           : "",
+//   minute         : "",
+//   second         : ""
+// }
 
   var dateTime = {};  // output buffer
   var dateObj = new Date(1000 * (UTC+tzDelta)); // Javascript toUTCString() method can be

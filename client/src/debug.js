@@ -1,2 +1,3 @@
-const debug = true;
-module.exports = debug;
+module.exports = {
+    debug : true
+}

@@ -1,11 +1,11 @@
 import React, {useState, useEffect} from "react";
-import mapAPI                       from "./utils/googleAPI";
+// import mapAPI                       from "./utils/googleAPI";
 import tripsAPI                     from "./utils/tripsAPI";
 import geoMath                      from "./utils/geoMath";
 import SearchForm                   from "./components/SearchForm";
 import MapCard                      from "./components/MapCard";
-import {getTimeStr}                 from "./utils/timeSvcs";
-import {debug}                      from "./debug";
+import {getTimeStr, getTimeFlags}   from "./utils/timeSvcs";
+// import {debug}                      from "./debug";
 import "./App.css";
 
 // On 'Demo Go!'
@@ -18,7 +18,6 @@ import "./App.css";
 
 
 function App() {
-  let haveStations = false;
 
 
 //******************
@@ -35,18 +34,27 @@ function App() {
   //   stationLon  : < longitude, a real number in -87.774704 - -87.54938625, numbers are more negative going West>
   // }   
   const [stations,setStations] = useState({
-    trigger : true,
-    selectedStart :   2,
-    selectedEnd   : 673,
-    list : []
+    populated      : 0,
+    startIndex     : 0,
+    endIndex       : 1,
+    list           : [],
+    latitude       : geoMath.randLat(),
+    longitude      : geoMath.randLon(),
+    minStationDist : 0.0
   });
 
-  const [location,setLocation] = useState({
-    latitude  : 0.0,
-    longitude : 0.0
+  const [searchOptions,setSearchOptions] = useState({
+      useTime    : false,
+      useProfile : false
   });
 
-  const [timeAndDate,setTimeAndDate] = useState();
+  const [timeAndDate,setTimeAndDate] = useState({
+    timeStr     : '',
+    isWeekday   : 0,
+    isMorning   : 0,
+    isAfternoon : 0,
+    isEvening   : 0
+  });
 
 //******************
 //*   Functions    *
@@ -54,49 +62,77 @@ function App() {
   
   // When ready...
   useEffect( () => {
-      setInterval(clock,1000);
-      setLocation({
-        latitude  : geoMath.randLat(),
-        longitude : geoMath.randLon()
-      });
-      if (!haveStations) {
-        let stationArr = tripsAPI.getStations();
-        setStations({trigger: stations.trigger + 1, stations: stationArr});
-        haveStations = true;
+      if (!stations.list.length) {
+        setInterval(clock,1000);
+        tripsAPI.getStations(setStationsList);
       }
+      
     },
     // no monitoring  
     []
   );      
 
-  // handleFormChange() updates the search object as the user types
-  // in the form fields. react renders them as they are changed.
-  function handleFormChange(event) {
-    event.preventDefault();
-    // Get the value and name of the input which triggered the change
-    const name  = event.target.name;
-    const value = event.target.value;
-    // And update the state so the user can see feedback as the input is typed.
-
-    // setSearch({...search, [name] : value});
-  };
-
-  function handleFormSubmit() {
-
-  }
-
-  function whereAmI() {
-    setLocation({
-      latitude  : geoMath.randLat(),
-      longitude : geoMath.randLon()
+  function setStationsList(stationArr) {
+    let closestStation = geoMath.findClosestStation(stations.latitude,stations.longitude,stationArr);
+    setStations({
+      ...stations,
+      populated      : stations.populated + 1, 
+      list           : stationArr,
+      minStationDist : closestStation.minDist,
+      startIndex     : closestStation.minIndex
     });
   }
 
-  function clock() {
-    setTimeAndDate(getTimeStr());
+  function updateStations(lat,lon,list) {
+    let closestStation = geoMath.findClosestStation(lat,lon,list);
+    setStations({
+      ...stations,
+      latitude       : lat,
+      longitude      : lon,
+      minStationDist : closestStation.minDist,
+      startIndex     : closestStation.minIndex
+    });  
   }
 
-  return (
+  function whereAmI(event) {
+    event.preventDefault();
+    let lat = geoMath.randLat();
+    let lon = geoMath.randLon();
+    updateStations(lat,lon,stations.list);
+    // let closestStation = geoMath.findClosestStation(lat,lon,stations.list);
+    // if (debug) {console.log(`lat,lon ${lat},${lon} is ${closestStation.minDist} from station ${stations.list[closestStation.minIndex].stationId}`)}
+    // setStations({
+    //   ...stations,
+    //   latitude       : lat,
+    //   longitude      : lon,
+    //   minStationDist : closestStation.minDist,
+    //   startIndex     : closestStation.minIndex
+    // });  
+  }
+
+  function clock() { 
+    let tStr = getTimeStr();
+    let flagsObj = getTimeFlags(tStr);
+    setTimeAndDate({
+      timeStr     : tStr,
+      isWeekday   : flagsObj.isWeekday,
+      isMorning   : flagsObj.isMorning,
+      isAfternoon : flagsObj.isAfternoon,
+      isEvening   : flagsObj.isEvening
+    });
+  }
+
+  function handleRadioToggle(event) {
+    event.preventDefault();
+    let name = event.target.name;
+    let value = event.target.value;
+    setSearchOptions({
+      ...searchOptions,
+      [name] : value === 'yes' ? true : false
+    })
+  };
+
+return (
     <div className="container AppBar">
       <div className="row AppBar-header">
         <div id="nameBox">
@@ -111,14 +147,20 @@ function App() {
           <div className="row card">
             <div>
               <SearchForm
-                timeAndDate={timeAndDate}
-                lat={location.latitude}
-                lon={location.longitude}
-                startStation={stations.selectedStart}
-                endStation={stations.selectedEnd}
-                whereAmI={whereAmI}
-                handleFormChange={handleFormChange}
-                handleFormSubmit={handleFormSubmit}
+                timeAndDate    ={timeAndDate.timeStr}
+                isWeekday      ={timeAndDate.isWeekday}
+                partOfDay      ={timeAndDate.isMorning?'morning':(timeAndDate.isEvening?'evening':'afternoon')}
+                lat            ={stations.latitude.toPrecision(8)}
+                lon            ={stations.longitude.toPrecision(8)}
+                startStation   ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
+                startName      ={stations.populated? stations.list[stations.startIndex].stationName : ''}
+                endStation     ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
+                endName        ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
+                minStationDist ={stations.minStationDist.toPrecision(3)}
+                useTime        ={searchOptions.useTime}
+                useProfile     ={searchOptions.useProfile}
+                whereAmI       ={whereAmI}
+                handleRadio    ={handleRadioToggle}
               />
             </div>
           </div>
