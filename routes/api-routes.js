@@ -98,6 +98,7 @@ module.exports = function(app) {
   //* api routes ***********************************
 
   app.get("/api/stations", (req,res) => {
+    if (debug) {console.log('stations requested');}
     // return all stations. 
     db.Stations.find({}).
     exec( (err,dataArr) => {

@@ -287,6 +287,25 @@ module.exports = {
 
     //* Start of Execution ***************
     
+    //* Play area ************************
+
+    // const DSTtransitions = [
+    //   '2018-03-11T08:00',
+    //   '2018-11-04T07:00',
+    //   '2019-03-10T08:00',
+    //   '2019-11-03T07:00',
+    //   '2020-03-08T08:00',
+    //   '2020-11-01T07:00',
+    //   '2020-02-23T09:15'
+    // ];
+    // DSTtransitions.forEach((s) => {
+    //   d = new Date(Date.UTC(s.slice(0,4),s.slice(5,7)-1,s.slice(8,10),s.slice(11,13),s.slice(14,16),0,0));
+
+    //   console.log(d.getTime(), d.toUTCString());
+    // })
+    // d = Date.now();
+    // console.log(d,d.getTime())
+
     //* Users ****************************
 
     db.Users.countDocuments({}, (e,usersCount) => {

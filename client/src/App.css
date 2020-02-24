@@ -1,12 +1,12 @@
-.App {
+.AppBar {
   text-align: center;
 }
 
-.App-header {
+.AppBar-header {
   position: relative;
-  background-image: url("https://media.giphy.com/media/3o85xonfOvQzN3eCNG/giphy.gif");
+  background-image: url("https://media.giphy.com/media/o0mdBMezyYk5q/giphy.gif");
   background-color: #222;
-  height: 170px;
+  height: 145px;
   padding: 20px;
   color: white;
 }
@@ -26,22 +26,10 @@
     border: solid 1px black;
 }
 
-.nav-button {
-  position: absolute;
-  top: 125px;
-  left: 125px;
-}
-
-.nav-title {
+.AppBar-title {
   position: absolute;
   top: 50px;
-  left: 730px;
+  left: 50%;
   color: white;
   font-size: 4rem;
-}
-
-.book-card {
-  position: relative;
-  float: left;
-  width: 100%;
 }
