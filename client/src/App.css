@@ -1,0 +1,47 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  position: relative;
+  background-image: url("https://media.giphy.com/media/3o85xonfOvQzN3eCNG/giphy.gif");
+  background-color: #222;
+  height: 170px;
+  padding: 20px;
+  color: white;
+}
+
+#nameBox {
+    position: absolute;
+    top: 0px;
+    left: 50px;
+    width: 250px;
+    height: 100px;
+    padding: 15px;
+    margin: 20px 0 0 0;
+    text-align: center;
+    background: yellow;
+    color: black;
+    border-radius: 100px;
+    border: solid 1px black;
+}
+
+.nav-button {
+  position: absolute;
+  top: 125px;
+  left: 125px;
+}
+
+.nav-title {
+  position: absolute;
+  top: 50px;
+  left: 730px;
+  color: white;
+  font-size: 4rem;
+}
+
+.book-card {
+  position: relative;
+  float: left;
+  width: 100%;
+}
