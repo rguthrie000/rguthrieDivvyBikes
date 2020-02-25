@@ -63,7 +63,6 @@ app.use(express.json());
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("./client/build"));
 }
-
 // Session specification - session is established on valid login
 app.use(
   session({

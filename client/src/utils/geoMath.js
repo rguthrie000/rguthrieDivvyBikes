@@ -1,6 +1,6 @@
 // import {debug} from "../debug";
 
-const divvyLimits = {
+const divvyBox = {
   latLo :  41.736646,
   latHi :  42.064854,
   lonLo : -87.774704,
@@ -9,9 +9,11 @@ const divvyLimits = {
 
 export default {
     
-  randLat : () => (divvyLimits.latLo + Math.random()*(divvyLimits.latHi - divvyLimits.latLo)),
+  randLat : () => (divvyBox.latLo + Math.random()*(divvyBox.latHi - divvyBox.latLo)),
 
-  randLon : () => (divvyLimits.lonLo + Math.random()*(divvyLimits.lonHi - divvyLimits.lonLo)),
+  randLon : () => (divvyBox.lonLo + Math.random()*(divvyBox.lonHi - divvyBox.lonLo)),
+
+  divvyLimits : () => divvyBox,
 
   findClosestStation(lat,lon,list) {
     let dArr = list.map((s) => ((s.stationLat-lat)**2+(s.stationLon-lon)**2));

@@ -138,36 +138,40 @@ return (
         <div id="nameBox">
             <h5>rguthrie's</h5>
             <h4>Divvy Bikes Planner</h4>
+
+            <div class="smallprint">
+              <br />
+              <p>copyright &#169; rguthrie, 2020</p>
+            </div>   
+
         </div>
         <h1 className="AppBar-title">Bike Chicago!</h1>
       </div>
 
       <div className="row">
-        <div className="col-sm-6">
-          <div className="row card">
-            <div>
-              <SearchForm
-                timeAndDate    ={timeAndDate.timeStr}
-                isWeekday      ={timeAndDate.isWeekday}
-                partOfDay      ={timeAndDate.isMorning?'morning':(timeAndDate.isEvening?'evening':'afternoon')}
-                lat            ={stations.latitude.toPrecision(8)}
-                lon            ={stations.longitude.toPrecision(8)}
-                startStation   ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
-                startName      ={stations.populated? stations.list[stations.startIndex].stationName : ''}
-                endStation     ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
-                endName        ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
-                minStationDist ={stations.minStationDist.toPrecision(3)}
-                useTime        ={searchOptions.useTime}
-                useProfile     ={searchOptions.useProfile}
-                whereAmI       ={whereAmI}
-                handleRadio    ={handleRadioToggle}
-              />
-            </div>
+        <div className="col-sm-4">
+          <div className="row info-card">
+            <SearchForm
+              timeAndDate    ={timeAndDate.timeStr}
+              isWeekday      ={timeAndDate.isWeekday}
+              partOfDay      ={timeAndDate.isMorning?'morning':(timeAndDate.isEvening?'evening':'afternoon')}
+              lat            ={stations.latitude.toPrecision(8)}
+              lon            ={stations.longitude.toPrecision(8)}
+              startStation   ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
+              startName      ={stations.populated? stations.list[stations.startIndex].stationName : ''}
+              endStation     ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
+              endName        ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
+              minStationDist ={stations.minStationDist.toPrecision(3)}
+              useTime        ={searchOptions.useTime}
+              useProfile     ={searchOptions.useProfile}
+              whereAmI       ={whereAmI}
+              handleRadio    ={handleRadioToggle}
+            />
           </div>
           <div className="row card">
           </div>
         </div>
-        <div className="col-sm-6">
+        <div className="col-sm-8">
             <MapCard />
         </div>
       </div>

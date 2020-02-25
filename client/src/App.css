@@ -1,6 +1,6 @@
-.AppBar {
+/* .AppBar {
   text-align: center;
-}
+} */
 
 .AppBar-header {
   position: relative;
@@ -9,6 +9,7 @@
   height: 145px;
   padding: 20px;
   color: white;
+  border-radius: 20px;
 }
 
 #nameBox {
@@ -26,10 +27,24 @@
     border: solid 1px black;
 }
 
+.smallprint {
+  color: yellow;
+  font-size: 10px;
+}
+
 .AppBar-title {
   position: absolute;
   top: 50px;
   left: 50%;
   color: white;
   font-size: 4rem;
+}
+
+.info-card {
+  height: 280px;
+  width: 105%;
+  margin: 10px 0 0 1px;
+  border-radius: 5px;
+  border: solid 1px black;
+  box-shadow: 2px 4px lightgray;
 }
