@@ -8,23 +8,20 @@ function SearchForm(props) {
     <div id="search-box">
         <div>
           <div id="button-random">
-            <button className="btn btn-primary button-search" onClick={props.whereAmI}>random</button>
+            <button className="button-random" onClick={props.whereAmI}>random</button>
           </div>  
-            <div
-            id="position-lat"
-            className="number-box"
-            value={props.title}
-            name="position-lat"
-            >{props.lat}</div>
-            <div
-            id="position-lon"
-            className="number-box"
-            value={props.author}
-            name="position-lon"
-            >{props.lon}</div>
+            <label id="position-lat-label" htmlFor="position-lat">Location: lat</label>
+            <div id="position-lat" className="number-box" value={props.title} name="position-lat">
+            <p>{props.lat}</p>  
+            </div>
+            <label id="position-lon-label" htmlFor="position-lon">lon</label>
+            <div id="position-lon" className="number-box" value={props.author} name="position-lon">
+              {props.lon}
+            </div>
         </div>
-        <p id="minDistance">{props.minStationDist} miles to:</p>
+        <p id="minDistance">from this location, {props.minStationDist} miles to:</p>
         <div>
+            <label id="start-station-id-label" htmlFor="start-station-id">Start Station id & name</label>
             <div id="start-station-id">{props.startStation}</div>
             <div
             id="start-station"
@@ -34,6 +31,7 @@ function SearchForm(props) {
             >{props.startName}</div>
         </div>
         <div>
+            <label id="end-station-id-label" htmlFor="end-station-id">Destination Station id & name</label>
             <div id="end-station-id">{props.endStation}</div>
             <div
             id="end-station"
@@ -43,9 +41,38 @@ function SearchForm(props) {
             >{props.endName}</div>
         </div>
     </div>
+        <div id="radio-box-location">
+          <p>Map click:</p>
+          <div className="form-check">
+            <label>
+              <input
+                type="radio"
+                name="clickStart"
+                value="start"
+                className="form-check-input"
+                checked={props.clickStart}
+                onChange={props.handleClickStart}
+              />
+              start
+            </label>
+          </div>
+          <div className="form-check">
+            <label>
+              <input
+                type="radio"
+                name="clickStart"
+                value="end"
+                className="form-check-input"
+                checked={!props.clickStart}
+                onChange={props.handleClickStart}
+              />
+              destination
+            </label>
+          </div>
+        </div>
         <div id="radio-box-time">
-          <p>Use day and time?</p>
-          <div className="form-check-inline">
+          <p>Use day & time?</p>
+          <div className="form-check">
             <label>
               <input
                 type="radio"
@@ -58,7 +85,7 @@ function SearchForm(props) {
               yes
             </label>
           </div>
-          <div className="form-check-inline">
+          <div className="form-check">
             <label>
               <input
                 type="radio"
@@ -74,7 +101,7 @@ function SearchForm(props) {
         </div>
         <div id="radio-box-profile">
           <p>Use user profile?</p>
-          <div className="form-check-inline">
+          <div className="form-check">
             <label>
               <input
                 type="radio"
@@ -87,7 +114,7 @@ function SearchForm(props) {
               yes
             </label>
           </div>
-          <div className="form-check-inline">
+          <div className="form-check">
             <label>
               <input
                 type="radio"

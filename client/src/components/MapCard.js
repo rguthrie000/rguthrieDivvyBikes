@@ -2,11 +2,11 @@ import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import "./MapCard.css";
 
-const AnyReactComponent = ({ text }) => (
+const Station = ({ text, background }) => (
   <div style={{
     color: 'white', 
-    background: 'grey',
-    padding: '15px 10px',
+    background: 'gray',
+    padding: '0px 1px',
     display: 'inline-flex',
     textAlign: 'center',
     alignItems: 'center',
@@ -18,33 +18,91 @@ const AnyReactComponent = ({ text }) => (
   </div>
 );
 
-class SimpleMap extends React.Component {
-  static defaultProps = {
-    center: {lat: 41.90075, lng: -87.85},
+const LocStation = ({ text, background }) => (
+  <div style={{
+    color: 'white', 
+    background: 'magenta',
+    padding: '0px 1px',
+    display: 'inline-flex',
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '100%',
+    transform: 'translate(-50%, -50%)'
+  }}>
+    {text}
+  </div>
+);
+
+const StartStation = ({ text, background }) => (
+  <div style={{
+    color: 'white', 
+    background: 'green',
+    padding: '0px 1px',
+    display: 'inline-flex',
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '100%',
+    transform: 'translate(-50%, -50%)'
+  }}>
+    {text}
+  </div>
+);
+
+const EndStation = ({ text, background }) => (
+  <div style={{
+    color: 'white', 
+    background: 'red',
+    padding: '0px 1px',
+    display: 'inline-flex',
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '100%',
+    transform: 'translate(-50%, -50%)'
+  }}>
+    {text}
+  </div>
+);
+
+function SimpleMap({keyVal,centerLat,centerLon,stations,startStation,endStation,mapClick}) {
+  const defaultProps = {
+    center: {lat: 41.90075, lng: -87.65},
     zoom: 11
   };
 
-  render() {
-    return (
-      <GoogleMapReact
-        bootstrapURLKeys={{ key: 'AIzaSyAcAthdRfN4aH4z75JtzKI3UXDFZxmw_V4' }}
-        defaultCenter={this.props.center}
-        defaultZoom={this.props.zoom}
-      >
-        <AnyReactComponent 
-          lat={41.876511229} 
-          lng={-87.62054801} 
-          text={'Buckingham Fountain'} 
-        />
-      </GoogleMapReact>
-    );
-  }
+  return (
+    <GoogleMapReact
+      onClick={mapClick}
+      // bootstrapURLKeys={{ key: {keyVal} }}
+      bootstrapURLKeys={{ key: 'AIzaSyAcAthdRfN4aH4z75JtzKI3UXDFZxmw_V4'}}
+      defaultCenter={defaultProps.center}
+      defaultZoom={defaultProps.zoom}
+      yesIWantToUseGoogleMapApiInternals
+    >
+      {stations.map((s,i) => (
+        <Station key={i} lat={s.stationLat} lng={s.stationLon} text={'*'} background={'gray'}/>
+      ))}
+      <LocStation   lat={centerLat              } lng={centerLon              } text={'loc'}   />
+      <StartStation lat={startStation.stationLat} lng={startStation.stationLon} text={'start'} />
+      <EndStation   lat={endStation.stationLat  } lng={endStation.stationLon  } text={'dest'}  />
+    </GoogleMapReact> 
+  );
 }
 
-function MapCard(props) {
+function MapCard({keyVal,centerLat,centerLon,stations,startStation,endStation,mapClick}) {
   return (
     <div id="map" className="card mapcard">
-      <SimpleMap/>
+      <SimpleMap 
+        keyVal={keyVal}
+        centerLat={centerLat}
+        centerLon={centerLon}
+        stations={stations}
+        startStation={startStation}
+        endStation={endStation}
+        mapClick={mapClick}
+      />
     </div>
   );
 }

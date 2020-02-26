@@ -1,0 +1,13 @@
+.chart-summary {
+  height: 50px;
+  text-align: center;
+  margin: auto;
+  margin-top: 25px;
+  font-size: 24px;
+}
+
+.chart-detail {
+  text-align: center;
+  margin: auto;
+  font-size: 16px;
+}

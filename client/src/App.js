@@ -1,30 +1,19 @@
 import React, {useState, useEffect} from "react";
-// import mapAPI                       from "./utils/googleAPI";
 import tripsAPI                     from "./utils/tripsAPI";
 import geoMath                      from "./utils/geoMath";
 import SearchForm                   from "./components/SearchForm";
 import MapCard                      from "./components/MapCard";
-import {getTimeStr, getTimeFlags}   from "./utils/timeSvcs";
-// import {debug}                      from "./debug";
+import TripsChart                   from "./components/TripsChart";
+import {getTimeStr,getTimeFlags}    from "./utils/timeSvcs";
 import "./App.css";
-
-// On 'Demo Go!'
-// 1. Randomized location over city area. Then pick closest station.
-// 2. 2nd Randomized location over city area. Then pick closest station.
-// 3. Time -- now, weekday morning, weekday afternoon, weekday evening, weekend/holiday day, weekend/holiday evening
-// 4. fetch route for start/dest
-// 5. fetch actuals from server - recent and near future days in category (weekday or weekend/holiday)
-// 6. build and chart statistics - compare to Google's answer.
 
 
 function App() {
-
 
 //******************
 //*   State Data   *
 //******************
   
-
   // Station list. A station:
   // {
   //   stationId   : < one of 611 numbers in 2..673 (not all values are used) >
@@ -35,8 +24,9 @@ function App() {
   // }   
   const [stations,setStations] = useState({
     populated      : 0,
-    startIndex     : 0,
-    endIndex       : 1,
+    keyVal         : '',
+    startIndex     : 42,
+    endIndex       : 505,
     list           : [],
     latitude       : geoMath.randLat(),
     longitude      : geoMath.randLon(),
@@ -48,12 +38,24 @@ function App() {
       useProfile : false
   });
 
+  const [clickStart,setClickStart] = useState();
+
   const [timeAndDate,setTimeAndDate] = useState({
     timeStr     : '',
     isWeekday   : 0,
+    isOvernight : 0,
     isMorning   : 0,
     isAfternoon : 0,
     isEvening   : 0
+  });
+
+  const [statsAndCharts,setStatsAndCharts] = useState({
+    minDuration     : '',
+    maxDuration     : '',
+    averageDuration : '',
+    stdDevDuration  : '',
+    labels          : [],
+    binTrips        : []
   });
 
 //******************
@@ -64,13 +66,22 @@ function App() {
   useEffect( () => {
       if (!stations.list.length) {
         setInterval(clock,1000);
+        setClickStart(true);
+        tripsAPI.getKey(setKey);
         tripsAPI.getStations(setStationsList);
       }
-      
     },
     // no monitoring  
     []
   );      
+
+  function setKey(keyVal) {
+    setStations({
+      ...stations,
+      keyVal : keyVal
+    });
+    console.log(`received keyVal ${keyVal}`);
+  }
 
   function setStationsList(stationArr) {
     let closestStation = geoMath.findClosestStation(stations.latitude,stations.longitude,stationArr);
@@ -83,31 +94,100 @@ function App() {
     });
   }
 
-  function updateStations(lat,lon,list) {
-    let closestStation = geoMath.findClosestStation(lat,lon,list);
-    setStations({
-      ...stations,
-      latitude       : lat,
-      longitude      : lon,
-      minStationDist : closestStation.minDist,
-      startIndex     : closestStation.minIndex
-    });  
-  }
-
   function whereAmI(event) {
     event.preventDefault();
     let lat = geoMath.randLat();
-    let lon = geoMath.randLon();
-    updateStations(lat,lon,stations.list);
-    // let closestStation = geoMath.findClosestStation(lat,lon,stations.list);
-    // if (debug) {console.log(`lat,lon ${lat},${lon} is ${closestStation.minDist} from station ${stations.list[closestStation.minIndex].stationId}`)}
-    // setStations({
-    //   ...stations,
-    //   latitude       : lat,
-    //   longitude      : lon,
-    //   minStationDist : closestStation.minDist,
-    //   startIndex     : closestStation.minIndex
-    // });  
+    let lng = geoMath.randLon();
+    let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
+    setStations({
+      ...stations,
+      latitude       : lat,
+      longitude      : lng,
+      minStationDist : closestStation.minDist,
+      startIndex     : closestStation.minIndex
+    }); 
+    tripsAPI.getTrips(stations,searchOptions,processTrips);
+  }
+
+  function mapClick({x, y, lat, lng}) {
+    // event.preventDefault();
+
+    console.log(x, y, lat, lng)
+    let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
+    setStations({
+      ...stations,
+      latitude       : clickStart ? lat : stations.latitude,
+      longitude      : clickStart ? lng : stations.longitude,
+      minStationDist : clickStart ? closestStation.minDist : stations.minStationDist,
+      startIndex     : clickStart ? closestStation.minIndex : stations.startIndex,
+      endIndex       : clickStart ? stations.endIndex : closestStation.minIndex
+    });  
+    tripsAPI.getTrips(stations,searchOptions,processTrips);
+  }
+
+  // these functions are kept separate so they cleanly match 
+  // the database responses.
+  function processTrips(trips) {
+    console.log('pushed to trips ',JSON.stringify(trips));
+    if (trips.length === 0) {
+      setStatsAndCharts({
+        minDuration     : 0,
+        maxDuration     : 0,
+        averageDuration : '--:--',
+        stdDevDuration  : '--:--',
+        binTrips        : []
+      });
+    } else {  
+      // sorting will help with rejection of outliers later
+      console.log('tripStats ', trips.length)
+      trips.sort( (a,b) => a.tripDuration - b.tripDuration);
+      let mean = trips.reduce((total,t) => total + t.tripDuration, 0) / trips.length;
+      console.log(`mean ${mean}`);
+      let variance = trips.reduce((total,t) => total + (t.tripDuration-mean)**2, 0) / (trips.length > 1 ? trips.length-1 : 1);
+      let stdDev = Math.sqrt(variance);
+      console.log(`stdDev ${stdDev}`);
+
+      trips = trips.filter( (t) => Math.abs(t.tripDuration-mean) <= 3.0*stdDev )
+      mean = trips.reduce((total,t) => total + t.tripDuration, 0) / trips.length;
+      console.log(`mean (reduce) ${mean}`);
+      variance = trips.reduce((total,t) => total + (t.tripDuration-mean)**2, 0) / (trips.length > 1 ? trips.length-1 : 1);
+      stdDev = Math.sqrt(variance);
+      console.log(`stdDev (reduce) ${stdDev}`);
+
+      let span = trips[trips.length-1].tripDuration - trips[0].tripDuration;
+      let baseDuration = trips[0].tripDuration;
+      let durationStep = 0.1*span;
+      let maxbinCt = 0;
+      let binTrips = [];
+      let labels = [];
+      let t = 0;
+      for (let b = 0; b < 10 && t < trips.length; b++) {
+        let countInBin = 0;
+        while ((t < trips.length) && (trips[t].tripDuration < (baseDuration + (b+1)*durationStep))) {
+          countInBin++;
+          t++;
+        }
+        if (countInBin > maxbinCt) {
+          maxbinCt = countInBin;
+        }
+        labels.push(`${b % 2 ? '-' : makeMinutesAndSeconds((b + 0.5)*durationStep + baseDuration)}`);
+        binTrips.push({ 
+          bin  : b+1, 
+          trips: countInBin
+        });
+      }
+      console.log(`baseDuration ${baseDuration} durationStep ${durationStep}`);
+      console.log(`avgD ${mean} s =${Math.floor(mean/60)+':' + mean % 60} stdDev ${stdDev} s = ${Math.floor(stdDev/60)+':' + stdDev % 60}`);
+      console.log(`maxbinCt ${maxbinCt}`,JSON.stringify(binTrips));
+      setStatsAndCharts({
+        minDuration     : trips[0].tripDuration,
+        maxDuration     : trips[trips.length-1].tripDuration,
+        averageDuration : makeMinutesAndSeconds(mean), 
+        stdDevDuration  : makeMinutesAndSeconds(stdDev),
+        labels          : labels,
+        binTrips        : binTrips
+      });
+    }
   }
 
   function clock() { 
@@ -116,6 +196,7 @@ function App() {
     setTimeAndDate({
       timeStr     : tStr,
       isWeekday   : flagsObj.isWeekday,
+      isOvernight : flagsObj.isOvernight,
       isMorning   : flagsObj.isMorning,
       isAfternoon : flagsObj.isAfternoon,
       isEvening   : flagsObj.isEvening
@@ -132,6 +213,19 @@ function App() {
     })
   };
 
+  function handleClickStart(event) {
+    event.preventDefault();
+    let value = event.target.value;
+    setClickStart(value === 'start');
+  }
+
+  function makeMinutesAndSeconds(seconds) {
+    let sec = Math.floor(seconds % 60);
+    let min = Math.floor(seconds / 60);
+    sec = sec < 10? '0'+sec : sec;
+    return(min+':'+sec);
+  }
+
 return (
     <div className="container AppBar">
       <div className="row AppBar-header">
@@ -139,7 +233,7 @@ return (
             <h5>rguthrie's</h5>
             <h4>Divvy Bikes Planner</h4>
 
-            <div class="smallprint">
+            <div className="smallprint">
               <br />
               <p>copyright &#169; rguthrie, 2020</p>
             </div>   
@@ -154,25 +248,49 @@ return (
             <SearchForm
               timeAndDate    ={timeAndDate.timeStr}
               isWeekday      ={timeAndDate.isWeekday}
-              partOfDay      ={timeAndDate.isMorning?'morning':(timeAndDate.isEvening?'evening':'afternoon')}
-              lat            ={stations.latitude.toPrecision(8)}
-              lon            ={stations.longitude.toPrecision(8)}
-              startStation   ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
-              startName      ={stations.populated? stations.list[stations.startIndex].stationName : ''}
-              endStation     ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
-              endName        ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
-              minStationDist ={stations.minStationDist.toPrecision(3)}
-              useTime        ={searchOptions.useTime}
-              useProfile     ={searchOptions.useProfile}
-              whereAmI       ={whereAmI}
-              handleRadio    ={handleRadioToggle}
+              partOfDay      ={
+                timeAndDate.isOvernight ? 'overnight' : (
+                  timeAndDate.isMorning ? 'morning': (
+                    timeAndDate.isEvening?'evening':'afternoon'
+                  )
+                )
+              }
+              lat             ={stations.latitude.toPrecision(8)}
+              lon             ={stations.longitude.toPrecision(8)}
+              startStation    ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
+              startName       ={stations.populated? stations.list[stations.startIndex].stationName : ''}
+              endStation      ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
+              endName         ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
+              minStationDist  ={stations.minStationDist.toPrecision(3)}
+              useTime         ={searchOptions.useTime}
+              useProfile      ={searchOptions.useProfile}
+              whereAmI        ={whereAmI}
+              clickStart      ={clickStart}
+              handleRadio     ={handleRadioToggle}
+              handleClickStart={handleClickStart}
             />
           </div>
-          <div className="row card">
+          <div className="row chart-card">
+            <TripsChart
+              minDuration    ={statsAndCharts.minDuration}
+              maxDuration    ={statsAndCharts.maxDuration}
+              averageDuration={statsAndCharts.averageDuration}
+              stdDevDuration ={statsAndCharts.stdDevDuration}
+              labels         ={statsAndCharts.labels}
+              binTrips       ={statsAndCharts.binTrips} 
+            />
           </div>
         </div>
         <div className="col-sm-8">
-            <MapCard />
+            <MapCard 
+              keyVal       ={process.env.REACT_APP_GEOKEY}
+              centerLat    ={stations.latitude}
+              centerLon    ={stations.longitude}
+              stations     ={stations.populated? stations.list: []}
+              startStation ={stations.populated? stations.list[stations.startIndex] : {}}
+              endStation   ={stations.populated? stations.list[stations.endIndex  ] : {}}
+              mapClick     ={mapClick}
+            />
         </div>
       </div>
     </div>

@@ -1,10 +1,10 @@
 .search-box {
   position: relative;
-  height: 300px;
+  height: 350px;
   margin: 10px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
   text-align: left;
-  font-size: 12px;
+  font-size: 10pt;
   font-weight: 500;
   border: 2px solid black;
   border-radius: 10px;
@@ -15,6 +15,7 @@
   position: absolute;
   top: 15px;
   left: 20px;
+  font-size: 12pt;
   text-shadow: 1px 1px;
 }
 
@@ -22,48 +23,72 @@
   position: absolute;
   top: 15px;
   left: 250px;
+  font-size: 10pt;
   text-shadow: 1px 1px;
+}
+
+label {
+  font-size: 10pt;
+}
+
+#position-lat-label {
+  position:absolute;
+  top: 35px;
+  left: 30px;
+}
+
+#position-lon-label {
+  position:absolute;
+  top: 35px;
+  left: 140px;
 }
 
 #position-lat, #position-lon {
   position: absolute;
-  height: 20px;
+  top: 50px;
+  height: 21px;
   width: 100px;
   padding: 0px 0 0 10px;
   border: 1px solid black;
   border-radius: 2px;
-  box-shadow: 4px 2px;
+  box-shadow: 4px 2px gray;
 }
 
 #position-lat {
-  top: 50px;
   left: 30px;
 }
 
 #position-lon {
-  top: 50px;
   left: 140px;
 }
 
-.button-search {
-    position: absolute;
-    top: 34px;
-    left: 262px;
-    height: 35px;
-    width: 100px;
-    margin: 10px 0 0 0px;
-    padding: 0px 0px 0px 0px;
+.button-random {
+  position: absolute;
+  top: 34px;
+  left: 260px;
+  height: 35px;
+  width: 100px;
+  margin: 10px 0 0 5px;
+  padding: 0px 0px 0px 0px;
+  font-weight: 600;
+  color: white;
+  background-color: teal;
+  border: 1px solid magenta;
+  border-radius: 15px;
+  box-shadow: 2px 2px lightgray;
 }
-.button-search:hover {
-    margin: 10px 0 0 0px;
+.button-random:hover {
+    margin: 8px 0 0 0px;
     width: 110px;
+    height: 40px;
 }
 
 #minDistance {
   position: absolute;
-  top : 80px;
+  top : 75px;
   left: 25px;
   height: 20px;
+  text-shadow: 1px 1px;
 }
 
 #start-station-id,
@@ -92,8 +117,14 @@
   z-index:2;
 }
 
+#start-station-id-label {
+  position:absolute;
+  top: 100px;
+  left: 30px;
+}
+
 #end-station-id {
-  top: 160px;
+  top: 165px;
   left: 30px;
   width: 40px;
   height: 30px;
@@ -101,25 +132,42 @@
 }
 
 #end-station {
-  top: 160px;
+  top: 165px;
   left: 70px;
   width: 305px;
   height: 30px;
   z-index:2;
 }
 
+#end-station-id-label {
+  position:absolute;
+  top: 150px;
+  left: 30px;
+}
+
+input {
+  font-size: 10pt;
+}
 #radio-box-time,
-#radio-box-profile {
+#radio-box-profile,
+#radio-box-location {
   position: absolute;
-  top: 205px;
-  width: 150px;
+  width: 110px;
+  height: 100px;
+  font-size: 10pt;
   padding: 0 0 0 5px;
   border: 1px solid black;
 }
+#radio-box-location {
+  top: 205px;
+  left: 30px;
+}
 #radio-box-time {
-  left: 33px;
+  top: 205px;
+  left: 140px;
 }
 #radio-box-profile {
-  left: 218px;
+  top: 205px;
+  left:250px;
 }
 

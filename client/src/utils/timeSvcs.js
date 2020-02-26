@@ -48,15 +48,17 @@ getTimeFlags : (tStr) => {
   let isMorning   = false;
   let isAfternoon = false;
   let isEvening   = false;
-  if (hr <  5) {isEvening   = true;} else 
+  let isOvernight = false;
+  if (hr <  6) {isOvernight = true;} else 
   if (hr < 12) {isMorning   = true;} else
-  if (hr < 19) {isAfternoon = true;} else 
+  if (hr < 18) {isAfternoon = true;} else 
                {isEvening   = true;}
   return({
     isWeekday   : wkDay, 
     isMorning   : isMorning,
     isAfternoon : isAfternoon,
-    isEvening   : isEvening
+    isEvening   : isEvening,
+    isOvernight : isOvernight
   });
 
 },

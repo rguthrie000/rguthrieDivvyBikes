@@ -96,6 +96,9 @@ module.exports = function(app) {
   //})
 
   //* api routes ***********************************
+  app.get("/api/mapkey", (req,res) => {
+    res.send(process.env.REACT_APP_GEOKEY);
+  });
 
   app.get("/api/stations", (req,res) => {
     if (debug) {console.log('stations requested');}
@@ -137,14 +140,14 @@ module.exports = function(app) {
       let startHi = 1000*(req.body.startTime + req.body.startTol) + 100;
       queryObj.startTime = { $gte: startLo, $lte: startHi };
     }
-    if (req.body.useGenderMale) {
-      queryObj.genderMale = req.body.genderMale;
-    }
-    if (req.body.useBirthYear) {
-      let bYrLo   = req.body.birthYear - req.body.ageTol;
-      let bYrHi   = req.body.birthYear + req.body.ageTol;
-      queryObj.birthYear = { $gte:   bYrLo, $lte:   bYrHi };
-    }
+    // if (req.body.useGenderMale) {
+    //   queryObj.genderMale = req.body.genderMale;
+    // }
+    // if (req.body.useBirthYear) {
+    //   let bYrLo   = req.body.birthYear - req.body.ageTol;
+    //   let bYrHi   = req.body.birthYear + req.body.ageTol;
+    //   queryObj.birthYear = { $gte:   bYrLo, $lte:   bYrHi };
+    // }
     db.Trips.find(queryObj).
     select({ startTime: 1, tripDuration: 1 }).
     exec( (err, dataArr) => {
