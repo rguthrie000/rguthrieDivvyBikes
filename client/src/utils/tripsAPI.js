@@ -1,7 +1,6 @@
 // tripServer.js - client-side interface to our server
 // for retrieval of User info, Stations, and Trips.
 import axios   from "axios";
-import {debug} from "../debug";
 let tArr = [];
 
 export default  {
@@ -49,12 +48,10 @@ export default  {
       // startTime    : Date.now() - (364*24*60*60),
       // startTol     : 7*24*3600
     };
-    if (debug) {console.log('getTrips 1st query',queryObj);}
     tArr = [];
     axios.post("/api/trips", queryObj).then( (res) => {
 
       res.data.forEach( (t) => tArr.push({startTime: (t.startTime + 364*24*60*60), tripDuration: t.tripDuration}));
-      if (debug) {console.log(`1st query: ${res.data.length} trips`);}
       queryObj = {
         ...queryObj,
         startStation : stations.list[stations.endIndex].stationId,
@@ -62,10 +59,8 @@ export default  {
         // startTime    : queryObj.startTime - 364*24*60*60
       };
 
-      console.log('getTrips 2nd query',queryObj);
       axios.post("/api/trips", queryObj).then( (res) => {
         res.data.forEach( (t) => tArr.push({startTime: (t.startTime + 2*364*24*60*60), tripDuration: t.tripDuration}));
-        console.log(`2nd query: ${res.data.length} trips`)
         cb(tArr);
       });
     });
