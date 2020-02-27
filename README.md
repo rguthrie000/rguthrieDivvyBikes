@@ -1,29 +1,55 @@
-# Create React Express App
+# rguthrieGoogleBooks
+Plan bicycle trips using the Divvy Bike System in Chicago using the Divvy Bikes Planner!
 
-## About This Boilerplate
+Map-based application to show you estimated trip times for trips between starting and 
+ending Bike Stations of your choice.  The app mines 5.8M records of trip data for 2018 and
+2019 provided by Divvy.
 
-This setup allows for a Node/Express/React app which can be easily deployed to Heroku.
+This a MERN app; the server is Express/Node JS using MongoDB to serve the list of stations
+and trip information, and the client is a React app using the Google Maps API for the 
+Chicago map.  
 
-The front-end React app will auto-reload as it's updated via webpack dev server, and the backend Express app will auto-reload independently with nodemon.
+The package was initialized from a MERN template stored on GitHub.  This template was built by the react package's create-react-app script for the npm CLI.  
 
-## Starting the app locally
+The app is deployed on GitHub pages at:
 
-Start by installing front and backend dependencies. While in this directory, run the following command:
+https://rguthrie000.github.io/rguthrieDivvyBikes/
 
-```
-npm install
-```
+The repository on GitHub is:  rguthrie000/rguthrieGoogleBooks
 
-This should install node modules within the server and the client folder.
+The app is deployed in production configuration on heroku:
 
-After both installations complete, run the following command in your terminal:
+https://evening-sierra-31664.herokuapp.com/
 
-```
-npm start
-```
+# Design Notes
 
-Your app should now be running on <http://localhost:3000>. The Express server should intercept any AJAX requests from the client.
+File App.js is the state and HTML body file. Custom React components for the Search Form (SearchForm), the interactive Map (MapCard) and the output chart (TripsChart) are used within the HTML body in App.
 
-## Deployment (Heroku)
+Data flows down to the components using the 'conventional' props process.  
 
-To deploy, simply add and commit your changes, and push to Heroku. As is, the NPM scripts should take care of the rest.
+App.js uses The create-react-app script supplied with the react package was used to create the startup and initial HTML file. A bootstrap.com link was added to the index.HTML file, and the utils/API file was created, but otherwise only the files in /src are application-specific.
+
+## This application was developed with:
+VS Code - Smart Editor for HTML/CSS/JS
+node.js - JavaScript command-line interpreter
+Google Chrome Inspector - inspection/analysis tools integrated in Chrome Browser.
+react - middleware for optimized DOM manipulation and integrated JSX coding.
+github - version control, content repository.
+heroku - web deployment, including database hosting.
+
+Significant npm packages:
+
+Victory charting package for React,
+google-map-react mapping packaged for Google Maps on React.
+
+## Versioning
+
+GitHub is used for version control; the github repository is 
+rguthrie000/rguthrieDivvyBikes
+
+## Author
+rguthrie000 (Richard Guthrie)
+
+## Acknowledgments
+rguthrie000 is grateful to the UCF Coding Bootcamp - we rock!
+

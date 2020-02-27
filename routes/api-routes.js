@@ -96,9 +96,6 @@ module.exports = function(app) {
   //})
 
   //* api routes ***********************************
-  app.get("/api/mapkey", (req,res) => {
-    res.send(process.env.REACT_APP_GEOKEY);
-  });
 
   app.get("/api/stations", (req,res) => {
     if (debug) {console.log('stations requested');}

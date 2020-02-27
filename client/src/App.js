@@ -8,7 +8,7 @@ import {getTimeStr,getTimeFlags}    from "./utils/timeSvcs";
 import "./App.css";
 
 
-function App() {
+export default function App() {
 
 //******************
 //*   State Data   *
@@ -24,7 +24,7 @@ function App() {
   // }   
   const [stations,setStations] = useState({
     populated      : 0,
-    keyVal         : '',
+    centerSkew     : geoMath.centerSkew(),
     startIndex     : 42,
     endIndex       : 505,
     list           : [],
@@ -61,27 +61,18 @@ function App() {
 //******************
 //*   Functions    *
 //******************
-  
   // When ready...
   useEffect( () => {
       if (!stations.list.length) {
         setInterval(clock,1000);
         setClickStart(true);
-        tripsAPI.getKey(setKey);
+        // tripsAPI.getKey(setKey);
         tripsAPI.getStations(setStationsList);
       }
     },
     // no monitoring  
     []
   );      
-
-  function setKey(keyVal) {
-    setStations({
-      ...stations,
-      keyVal : keyVal
-    });
-    console.log(`received keyVal ${keyVal}`);
-  }
 
   function setStationsList(stationArr) {
     let closestStation = geoMath.findClosestStation(stations.latitude,stations.longitude,stationArr);
@@ -226,75 +217,76 @@ function App() {
     return(min+':'+sec);
   }
 
-return (
-    <div className="container AppBar">
-      <div className="row AppBar-header">
-        <div id="nameBox">
-            <h5>rguthrie's</h5>
-            <h4>Divvy Bikes Planner</h4>
+  if (!stations.list.length) {
+    return (<div>waiting for key</div>);
+  } else {
+    return (
+      <div className="container AppBar">
+        <div className="row AppBar-header">
+          <div id="nameBox">
+              <h5>rguthrie's</h5>
+              <h4>Divvy Bikes Planner</h4>
 
-            <div className="smallprint">
-              <br />
-              <p>copyright &#169; rguthrie, 2020</p>
-            </div>   
+              <div className="smallprint">
+                <br />
+                <p>copyright &#169; rguthrie, 2020</p>
+              </div>   
 
+          </div>
+          <h1 className="AppBar-title">Bike Chicago!</h1>
         </div>
-        <h1 className="AppBar-title">Bike Chicago!</h1>
-      </div>
-
-      <div className="row">
-        <div className="col-sm-4">
-          <div className="row info-card">
-            <SearchForm
-              timeAndDate    ={timeAndDate.timeStr}
-              isWeekday      ={timeAndDate.isWeekday}
-              partOfDay      ={
-                timeAndDate.isOvernight ? 'overnight' : (
-                  timeAndDate.isMorning ? 'morning': (
-                    timeAndDate.isEvening?'evening':'afternoon'
+        <div className="row">
+          <div className="col-sm-4">
+            <div className="row info-card">
+              <SearchForm
+                timeAndDate    ={timeAndDate.timeStr}
+                isWeekday      ={timeAndDate.isWeekday}
+                partOfDay      ={
+                  timeAndDate.isOvernight ? 'overnight' : (
+                    timeAndDate.isMorning ? 'morning': (
+                      timeAndDate.isEvening?'evening':'afternoon'
+                    )
                   )
-                )
-              }
-              lat             ={stations.latitude.toPrecision(8)}
-              lon             ={stations.longitude.toPrecision(8)}
-              startStation    ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
-              startName       ={stations.populated? stations.list[stations.startIndex].stationName : ''}
-              endStation      ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
-              endName         ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
-              minStationDist  ={stations.minStationDist.toPrecision(3)}
-              useTime         ={searchOptions.useTime}
-              useProfile      ={searchOptions.useProfile}
-              whereAmI        ={whereAmI}
-              clickStart      ={clickStart}
-              handleRadio     ={handleRadioToggle}
-              handleClickStart={handleClickStart}
-            />
+                }
+                lat             ={stations.latitude.toPrecision(8)}
+                lon             ={stations.longitude.toPrecision(8)}
+                startStation    ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
+                startName       ={stations.populated? stations.list[stations.startIndex].stationName : ''}
+                endStation      ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
+                endName         ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
+                minStationDist  ={stations.minStationDist.toPrecision(3)}
+                useTime         ={searchOptions.useTime}
+                useProfile      ={searchOptions.useProfile}
+                whereAmI        ={whereAmI}
+                clickStart      ={clickStart}
+                handleRadio     ={handleRadioToggle}
+                handleClickStart={handleClickStart}
+              />
+            </div>
+            <div className="row chart-card">
+              <TripsChart
+                minDuration    ={statsAndCharts.minDuration}
+                maxDuration    ={statsAndCharts.maxDuration}
+                averageDuration={statsAndCharts.averageDuration}
+                stdDevDuration ={statsAndCharts.stdDevDuration}
+                labels         ={statsAndCharts.labels}
+                binTrips       ={statsAndCharts.binTrips} 
+              />
+            </div>
           </div>
-          <div className="row chart-card">
-            <TripsChart
-              minDuration    ={statsAndCharts.minDuration}
-              maxDuration    ={statsAndCharts.maxDuration}
-              averageDuration={statsAndCharts.averageDuration}
-              stdDevDuration ={statsAndCharts.stdDevDuration}
-              labels         ={statsAndCharts.labels}
-              binTrips       ={statsAndCharts.binTrips} 
-            />
-          </div>
+          <div className="col-sm-8">
+              <MapCard 
+                centerSkew   ={{key: stations.centerSkew}}
+                centerLat    ={stations.latitude}
+                centerLon    ={stations.longitude}
+                stations     ={stations.populated? stations.list: []}
+                startStation ={stations.populated? stations.list[stations.startIndex] : {}}
+                endStation   ={stations.populated? stations.list[stations.endIndex  ] : {}}
+                mapClick     ={mapClick}
+              />
         </div>
-        <div className="col-sm-8">
-            <MapCard 
-              keyVal       ={process.env.REACT_APP_GEOKEY}
-              centerLat    ={stations.latitude}
-              centerLon    ={stations.longitude}
-              stations     ={stations.populated? stations.list: []}
-              startStation ={stations.populated? stations.list[stations.startIndex] : {}}
-              endStation   ={stations.populated? stations.list[stations.endIndex  ] : {}}
-              mapClick     ={mapClick}
-            />
         </div>
       </div>
-    </div>
-  );
+    )
+  }
 }
-
-export default App;
