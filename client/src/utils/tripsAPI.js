@@ -1,6 +1,7 @@
 // tripServer.js - client-side interface to our server
 // for retrieval of User info, Stations, and Trips.
-import axios from "axios";
+import axios   from "axios";
+import {debug} from "../debug";
 let tArr = [];
 
 export default  {
