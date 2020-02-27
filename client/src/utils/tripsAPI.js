@@ -48,12 +48,12 @@ export default  {
       // startTime    : Date.now() - (364*24*60*60),
       // startTol     : 7*24*3600
     };
-    console.log('getTrips 1st query',queryObj);
+    if (debug) {console.log('getTrips 1st query',queryObj);}
     tArr = [];
     axios.post("/api/trips", queryObj).then( (res) => {
 
       res.data.forEach( (t) => tArr.push({startTime: (t.startTime + 364*24*60*60), tripDuration: t.tripDuration}));
-      console.log(`1st query: ${res.data.length} trips`)
+      if (debug) {console.log(`1st query: ${res.data.length} trips`);}
       queryObj = {
         ...queryObj,
         startStation : stations.list[stations.endIndex].stationId,

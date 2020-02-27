@@ -29,7 +29,7 @@ module.exports = function(app) {
   // If the user has valid login credentials, send them to the members page.
   // Otherwise the user will be sent an error
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    console.log(`Login request: ${req.body.userName} ${req.body.password}`)
+    if (debug) {console.log(`Login request: ${req.body.userName} ${req.body.password}`)}
     if (req.user) {
       currentUserName = req.user;
     }
@@ -40,7 +40,7 @@ module.exports = function(app) {
   // If the user is created successfully, proceed to the members page,
   // otherwise return an error.
   app.post("/api/signup", (req, res) => {
-    console.log(`Signup request: ${req.body.userName} ${req.body.password}`);
+    if (debug) {console.log(`Signup request: ${req.body.userName} ${req.body.password}`);}
     currentUserName = req.body.userName;
     db.Users.create({
       userName   : req.body.userName,

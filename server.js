@@ -48,7 +48,7 @@ require("dotenv").config();
 // Look for environment variables to have been established by
 // dotenv.config()
 if (!process.env.password || !process.env.secret) {
-  console.log("Env variables aren't established. Check file './.env'.\n");
+  if (debug) {console.log("Env variables aren't established. Check file './.env'.\n");}
   return(1);
 }
 
