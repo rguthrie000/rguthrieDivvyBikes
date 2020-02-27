@@ -66,7 +66,7 @@ if (process.env.NODE_ENV === "production") {
 // Session specification - session is established on valid login
 app.use(
   session({
-    secret: process.env.secret,
+    secret: 'profoundkeyphrase',
     resave: true,
     saveUninitialized: true
   })
