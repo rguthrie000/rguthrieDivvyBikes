@@ -9,9 +9,10 @@ const db         = require("../models");
 const debug      = require("../debug");
 
 const dbReadyState = {
-    Users    : false,
-    Stations : false,
-    Trips    : false
+    Users       : false,
+    Stations    : false,
+    Trips       : false,
+    TripsSorted : true
 }
 
 module.exports = {
@@ -32,10 +33,8 @@ module.exports = {
     let   trips         = 0;    // cumulative count of desired records from Divvy trip records
     let   tripsPosting  = 0;    // count of records which are in-process with the MongoDB server
     let   tripsQueue    = [];   // internal Q for buffering file records destined for MongoDB
-    let   tHandle;              // 'handle' from Interval timer creation -- needed for removing the timer
     let   startTimeOld  = 0;
     let   sortErrors    = 0;
-    let   sorted        = false;
 
     const LOADING_CHUNKS    = 0;
     const WAITING_FOR_TRIPS = 1;
@@ -47,7 +46,7 @@ module.exports = {
     // of fetching files and regulating the submission of their records to MongoDB.  
     function startDBworker() {
       // start the interval timer
-      tHandle = setTimeout(dbWorker,500);
+      setTimeout(dbWorker,500);
       if (debug) {console.log('dbWorker started');}
       // init the file down-counter
       chunksToLoad = totalChunks;
@@ -78,7 +77,7 @@ module.exports = {
           } else {
             if (sortErrors) {
               if (debug) {console.log('starting sort');}
-              setTimeout(dbWorker,120000);
+              setTimeout(dbWorker,120000);  // 2 minutes
               tripsQueue.sort((a,b) => a.startTime - b.startTime);
               // fix it
               let j = 1;
@@ -94,6 +93,7 @@ module.exports = {
               j = 1;
               for (let i = 0; i < trips-1;) {
                 if (tripsQueue[i].startTime >= tripsQueue[j].startTime) {
+                  dbReadyState.TripsSorted = false;
                   if (debug) {console.log(`${tripsQueue[i].startTime - tripsQueue[j].startTime}`);}
                 } else {
                   i++;
@@ -191,7 +191,6 @@ module.exports = {
         // map from file columns to database properties (see '../models/trips.js').
         // note exclusion of userType, which is always '1' (because the CSV has already been purged
         // of non-subscribers).  
-        // let startTime = line['startTime'];
         if (lArr[0] !== 'id' && lArr[0] !== 'startTime') {
           let startTime = lArr[0];
           if (!startTimeOld) {
@@ -205,11 +204,6 @@ module.exports = {
           }
           tripsQueue.push({
             startTime    : startTime,
-            // tripDuration : line['tripDuration'],
-            // startStation : line['startStation'],
-            // endStation   : line[  'endStation'],
-            // genderMale   : line[      'gender'],
-            // birthYear    : line[   'birthYear']
             tripDuration : lArr[1],
             startStation : lArr[2],
             endStation   : lArr[3],
@@ -300,7 +294,7 @@ module.exports = {
         );
       }
       if (usersCount >= 1) {
-        dbReadyState.Stations = true;
+        dbReadyState.Users = true;
       } else {
         // Users is empty. Need 1 user for a trial Query! 
         db.Users.create({

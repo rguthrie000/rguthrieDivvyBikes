@@ -16,7 +16,7 @@
 const db         = require("../models/index");
 const passport   = require("../config/passport");
 const debug      = require("../debug");
-const checkModel = require("../config/checkModel");
+const {dbReady}  = require('../config/checkModel.js');
 
 let currentUserName = '';
 
@@ -96,6 +96,11 @@ module.exports = function(app) {
   //})
 
   //* api routes ***********************************
+
+  app.get("/api/dbready", (req,res) => {
+    if (debug) {console.log('dbReady requested');}
+    res.send(dbReady());
+  });
 
   app.get("/api/stations", (req,res) => {
     if (debug) {console.log('stations requested');}

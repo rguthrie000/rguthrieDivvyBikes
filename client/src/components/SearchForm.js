@@ -2,17 +2,29 @@ import React from "react";
 import "./SearchForm.css";
 
 function SearchForm(props) {
+  const DB_BAD     = 0;
+  const DB_GOOD    = 1;
+  const DB_UNKNOWN = 2;
+  const dbStyle = () => {
+    switch (props.dbOkay) {
+      case DB_BAD     : return('dbRed');
+      case DB_GOOD    : return('dbGreen');
+      case DB_UNKNOWN : return('dbBlue');
+      default         : return('dbOrange');
+    };
+  }
+
   return (
     <>
       <h6 id="timedate">{props.timeAndDate}</h6><h6 id="timecat">{props.isWeekday? 'weekday':'weekend'}, {props.partOfDay}</h6>
     <div id="search-box">
         <div>
           <div id="button-random">
-            <button className="button-random" onClick={props.whereAmI}>random</button>
+            <button id={dbStyle()} className="button-random" onClick={props.whereAmI}>random</button>
           </div>  
             <label id="position-lat-label" htmlFor="position-lat">Location: lat</label>
             <div id="position-lat" className="number-box" value={props.title} name="position-lat">
-            <p>{props.lat}</p>  
+              {props.lat}  
             </div>
             <label id="position-lon-label" htmlFor="position-lon">lon</label>
             <div id="position-lon" className="number-box" value={props.author} name="position-lon">

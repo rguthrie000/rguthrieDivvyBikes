@@ -5,6 +5,7 @@ import SearchForm                   from "./components/SearchForm";
 import MapCard                      from "./components/MapCard";
 import TripsChart                   from "./components/TripsChart";
 import {getTimeStr,getTimeFlags}    from "./utils/timeSvcs";
+import {debug}                      from "./debug"
 import "./App.css";
 
 
@@ -25,8 +26,8 @@ export default function App() {
   const [stations,setStations] = useState({
     populated      : 0,
     centerSkew     : geoMath.centerSkew(),
-    startIndex     : 42,
-    endIndex       : 505,
+    startIndex     : 564,
+    endIndex       : 299,
     list           : [],
     latitude       : geoMath.randLat(),
     longitude      : geoMath.randLon(),
@@ -58,6 +59,11 @@ export default function App() {
     binTrips        : []
   });
 
+  const DB_BAD     = 0;
+  const DB_GOOD    = 1;
+  const DB_UNKNOWN = 2;
+  const [dbOkay,setDbOkay] = useState();
+
 //******************
 //*   Functions    *
 //******************
@@ -66,6 +72,7 @@ export default function App() {
       if (!stations.list.length) {
         setInterval(clock,1000);
         setClickStart(true);
+        setDbOkay(DB_UNKNOWN);
         tripsAPI.getStations(setStationsList);
       }
     },
@@ -84,6 +91,15 @@ export default function App() {
     });
   }
 
+  function dbReadyResponse(response) {
+    if (debug) {console.log(JSON.stringify(response));}
+    if (response.Users && response.Stations && response.Trips && response.TripsSorted) {
+      setDbOkay(DB_GOOD);
+    } else {
+      setDbOkay(DB_BAD);
+    }
+  }
+
   function whereAmI(event) {
     event.preventDefault();
     let lat = geoMath.randLat();
@@ -96,6 +112,7 @@ export default function App() {
       minStationDist : closestStation.minDist,
       startIndex     : closestStation.minIndex
     }); 
+    tripsAPI.getDBready(dbReadyResponse);
     tripsAPI.getTrips(stations,searchOptions,processTrips);
   }
 
@@ -158,7 +175,7 @@ export default function App() {
         if (countInBin > maxbinCt) {
           maxbinCt = countInBin;
         }
-        labels.push(`${b % 2 ? '-' : makeMinutesAndSeconds((b + 0.5)*durationStep + baseDuration)}`);
+        labels.push(`${(parseInt(b) & 1) ? '-' : makeMinutesAndSeconds((b + 0.5)*durationStep + baseDuration)}`);
         binTrips.push({ 
           bin  : b+1, 
           trips: countInBin
@@ -251,6 +268,7 @@ export default function App() {
               minStationDist  ={stations.minStationDist.toPrecision(3)}
               useTime         ={searchOptions.useTime}
               useProfile      ={searchOptions.useProfile}
+              dbOkay          ={dbOkay}
               whereAmI        ={whereAmI}
               clickStart      ={clickStart}
               handleRadio     ={handleRadioToggle}

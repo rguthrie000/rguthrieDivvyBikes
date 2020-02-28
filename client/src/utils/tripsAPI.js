@@ -5,8 +5,8 @@ let tArr = [];
 
 export default  {
   
-  getKey : (cb) => {
-    axios.get("/api/mapkey").then( (res) => {
+  getDBready : (cb) => {
+    axios.get("/api/dbready").then( (res) => {
       cb(res.data);
     }
   )},

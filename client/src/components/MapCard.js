@@ -12,7 +12,7 @@ export default function MapCard({
     mapClick
   }) {
   
-  const defaultProps = { center: {lat: 41.90075, lng: -87.65}, zoom: 11 };
+  const defaultProps = { center: {lat: 41.9, lng: -87.65}, zoom: 11 };
 
   const Station = (props) => (
     <div style={{

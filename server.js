@@ -45,17 +45,15 @@ require("dotenv").config();
 //*   Startup   *
 //***************
 
-// Look for environment variables to have been established by
-// dotenv.config()
-if (!process.env.password || !process.env.secret) {
-  if (debug) {console.log("Env variables aren't established. Check file './.env'.\n");}
-  return(1);
-}
-
 // Configure Express
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+// app.set('trust proxy', 'loopback') // specify a single subnet
+
+
+// app.use(res.header("Access-Control-Allow-Origin", "*"));
+// app.use(res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept"));
 // When deployed, identify home for client assets
 // (during development, server and client are on the
 // same machine; the react client app will load the

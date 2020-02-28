@@ -1,13 +1,9 @@
 {
   "name": "mern",
-  "version": "0.1.0",
-  "description": "Mern Demo",
+  "version": "1.0.0",
+  "description": "Trip time estimator for Chicago's Divvy bike-sharing system.  MERN App.",
   "private": true,
-  "proxy": "http://localhost:3001/",
   "dependencies": {
-    "axios": "^0.19.2",
-    "dotenv": "^8.2.0",
-    "google-map-react": "^1.1.6",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
     "react-scripts": "^2.1.1"
