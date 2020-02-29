@@ -28,30 +28,25 @@ module.exports = {
     const totalTrips    = 5827718;
 
     // dbWorker variables
-    const totalChunks   = 62;   // count of files which collectively comprise 2018-2019 Divvy trip records
+    const totalChunks   = 59;   // count of files which collectively comprise 2018-2019 Divvy trip records
     let   chunksToLoad  = 0;    // down-counter for files remaining to be loaded
     let   trips         = 0;    // cumulative count of desired records from Divvy trip records
+    let   tripsToLoad   = 0;
     let   tripsPosting  = 0;    // count of records which are in-process with the MongoDB server
     let   tripsQueue    = [];   // internal Q for buffering file records destined for MongoDB
-    let   startTimeOld  = 0;
-    let   sortErrors    = 0;
-
-    const LOADING_CHUNKS    = 0;
-    const WAITING_FOR_TRIPS = 1;
-    const SORTING           = 2;
-    const POSTING           = 3;
-    let   dbWorkerState     = LOADING_CHUNKS;
+    let   tHandle;              // timer handle; saved at timer registration to be used at de-registration
 
     // startDBworker() initializes dbWorker, which wakes periodically to supervise the process
     // of fetching files and regulating the submission of their records to MongoDB.  
     function startDBworker() {
       // start the interval timer
-      setTimeout(dbWorker,500);
+      tHandle = setInterval(dbWorker,500);
       if (debug) {console.log('dbWorker started');}
       // init the file down-counter
       chunksToLoad = totalChunks;
       // start the first file read. note post-decrement of chunksToLoad.
       loadAFile(totalChunks - chunksToLoad--);
+      tripsToLoad = 100000;
     }
 
     // dbWorker() is the periodic service for the DB loading process. 
@@ -62,83 +57,35 @@ module.exports = {
     //    acknowledged by the db server.
     function dbWorker() {
       // where do we stand?
-      switch (dbWorkerState) {
-        case LOADING_CHUNKS:
-          loadAFile(totalChunks - chunksToLoad--);
-          if (!chunksToLoad) {
-            dbWorkerState = WAITING_FOR_TRIPS;
-          }
-          setTimeout(dbWorker,500);
-          break;
-        case WAITING_FOR_TRIPS:
-          if (debug) {console.log(`trips loaded: ${trips}. sort errors ${sortErrors}`);}
-          if (trips < totalTrips) {
-            setTimeout(dbWorker,500);
-          } else {
-            if (sortErrors) {
-              if (debug) {console.log('starting sort');}
-              setTimeout(dbWorker,120000);  // 2 minutes
-              tripsQueue.sort((a,b) => a.startTime - b.startTime);
-              // fix it
-              let j = 1;
-              for (let i = 0; i < trips-1;) {
-                if (tripsQueue[i].startTime >= tripsQueue[j].startTime) {
-                  tripsQueue[j].startTime += 50;
-                } else {
-                  i++;
-                  j++;
-                }
-              }
-              // test it
-              j = 1;
-              for (let i = 0; i < trips-1;) {
-                if (tripsQueue[i].startTime >= tripsQueue[j].startTime) {
-                  dbReadyState.TripsSorted = false;
-                  if (debug) {console.log(`${tripsQueue[i].startTime - tripsQueue[j].startTime}`);}
-                } else {
-                  i++;
-                  j++;
-                }
-              }
-              dbWorkerState = SORTING;
-            } else {
-              setTimeout(dbWorker,500);
-              dbWorkerState = POSTING;
-            }
-          }  
-          break;
-        case SORTING:
-          if (debug) {console.log('end of long wait');}
-          dbWorkerState = POSTING;
-          setTimeout(dbWorker,500);
-          break;
-        case POSTING:
-          let inQ = tripsQueue.length;
-          if (debug) {
-            console.log(
-              `POSTING: trips ${trips} inQ ${inQ} inPost ${tripsPosting}`
-            );
-          }
-          // load up MongoDB for the next interval
-          while (tripsPosting < 10000 && inQ > 0) {
-            // MongoDB will take 'insertMany' of 1000 records without incurring 
-            // extra management on their side.  So make as many posts of 1000 as
-            // needed to have at least 10000 total records pending with MongoDB.
-            let postCt = (inQ >= 1000 ? 1000 : inQ);
-            if (postCt > 0) {
-              postAThousand(postCt);
-            }  
-            // and track them coming out of tripsQueue
-            inQ -= postCt;
-          }  
-          if (inQ == 0 && tripsPosting == 0) {
-            if (debug) {console.log('Trips: loaded.');}
-            dbReadyState.Trips = true;
-            trialQuery();
-          } else {
-            setTimeout(dbWorker,500);
-          }
-          break;
+      let inQ = tripsQueue.length;
+      if (debug) {
+        console.log(`dbWorker: trips ${trips} tripsToLoad ${tripsToLoad} inQ ${inQ} inPost ${tripsPosting}`);
+      }
+      while (tripsPosting < 10000 && inQ > 0) {
+        // MongoDB will take 'insertMany' of 1000 records without incurring 
+        // extra management on their side.  So make as many posts of 1000 as
+        // needed to have at least 10000 total records pending with MongoDB.
+        let postCt = (inQ >= 1000 ? 1000 : inQ);
+        if (postCt > 0) {
+          postAThousand(postCt);
+        }  
+        // and track them coming out of tripsQueue
+        inQ -= postCt;
+      }  
+      if (inQ < 100000 && chunksToLoad > 0 && (tripsToLoad - trips < 100000)) {
+        let filePrefix = totalChunks - chunksToLoad--;
+        tripsToLoad += filePrefix < totalChunks-1? 100000 : (totalTrips % 100000);
+        loadAFile(filePrefix);
+      }
+      if (!chunksToLoad && inQ == 0 && tripsPosting == 0) {
+        if (debug) {
+          console.log(`Trips: loaded. sortErrors ${sortErrors.length}`);
+          console.log(sortErrors);
+        }
+        clearInterval(tHandle);
+        dbReadyState.Trips = true;
+        dbReadyState.TripsSorted = sortErrors? false : true;
+        trialQuery();
       }
     }
 
@@ -162,17 +109,13 @@ module.exports = {
     // genDivvyFilename() takes a file indicator and uses it to name the 
     // corresponding file from the set of files comprising the trip records.
     function genDivvyFilename(fileIndicator) {
-      if ((fileIndicator < 0) || (fileIndicator > totalChunks-1)) 
-        {return(`genDivvyFilename: argument ${fileIndicator} is out of range 0 - ${totalChunks-1}`);}
-
-      if (fileIndicator <  4) {return(`0${fileIndicator}-Divvy_Trips_2018_Q1.csv`);}
-      if (fileIndicator < 13) {return( `${fileIndicator<10? '0'+fileIndicator:fileIndicator}-Divvy_Trips_2018_Q2.csv`);}
-      if (fileIndicator < 25) {return( `${fileIndicator}-Divvy_Trips_2018_Q3.csv`);}
-      if (fileIndicator < 31) {return( `${fileIndicator}-Divvy_Trips_2018_Q4.csv`);}
-      if (fileIndicator < 35) {return( `${fileIndicator}-Divvy_Trips_2019_Q1.csv`);}
-      if (fileIndicator < 44) {return( `${fileIndicator}-Divvy_Trips_2019_Q2.csv`);}
-      if (fileIndicator < 56) {return( `${fileIndicator}-Divvy_Trips_2019_Q3.csv`);}
-      if (fileIndicator < 62) {return( `${fileIndicator}-Divvy_Trips_2019_Q4.csv`);}
+      if ((fileIndicator < 0) || (fileIndicator > totalChunks-1)) {
+        return(`genDivvyFilename: argument ${fileIndicator} is out of range 0 - ${totalChunks-1}`);
+      }
+      if (fileIndicator < 10) {
+        return(`0${fileIndicator}-Divvy.csv`);
+      }   
+      return( `${fileIndicator}-Divvy.csv`);
     }
 
     // loadAFile() uses the indicated filename prefix to open a file, read
@@ -187,23 +130,10 @@ module.exports = {
 
       readline.createInterface({input: fs.createReadStream(rdFile)}).on('line', (line) => {
         lArr = line.split(',');
-      // fs.createReadStream(rdFile).pipe(csv()).on('data', (line) => {
         // map from file columns to database properties (see '../models/trips.js').
-        // note exclusion of userType, which is always '1' (because the CSV has already been purged
-        // of non-subscribers).  
-        if (lArr[0] !== 'id' && lArr[0] !== 'startTime') {
-          let startTime = lArr[0];
-          if (!startTimeOld) {
-            startTimeOld = startTime;
-          } else {
-            if (startTimeOld >= startTime) {
-              sortErrors++;
-              if (debug) {console.log(`non-inc at ${trips} in ${rdFileBase}; ${startTime} <= ${startTimeOld}`)}
-            } 
-            startTimeOld = startTime; 
-          }
+        if (lArr[0] !== 'startTime') {
           tripsQueue.push({
-            startTime    : startTime,
+            startTime    : lArr[0],
             tripDuration : lArr[1],
             startStation : lArr[2],
             endStation   : lArr[3],
@@ -283,7 +213,7 @@ module.exports = {
     
     //* Play area ************************
 
-          // < JS execution sandbox ></JS>
+        // < JS execution sandbox ></JS>
 
     //* Users ****************************
 
@@ -307,7 +237,7 @@ module.exports = {
           // rowsAffected is an array whose first element is the number of rows affected.
           // here we expect either creation of one row, or zero rows if the userName
           // is not unique. 
-          dbReadyState = rowsAffected[0] > 0 ? true : false;
+          dbReadyState.Users = rowsAffected? true : false;
           if (debug) {console.log(`Users:    Loaded (created user 'ChicagoDog').`)}
         })
         .catch( (err) => {
