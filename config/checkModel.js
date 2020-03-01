@@ -158,14 +158,14 @@ module.exports = {
       if (debug) {console.log('trial queries');}
 
       // Trips trial
-      // structure a query using the last record in the Collection
+      // structure a query using the first record in the Collection
       const queryCheck = {
-        startTime     : 1577876220002,
-        tripDuration  : 120,
-        startStation  : 256,
-        endStation    : 240,
+        startTime     : 1514805120000,
+        tripDuration  : 323,
+        startStation  : 69,
+        endStation    : 159,
         genderMale    : 1,
-        birthYear     : 1982
+        birthYear     : 1988
       };
 
       let ms = queryCheck.startTime;
