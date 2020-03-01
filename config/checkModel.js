@@ -21,6 +21,7 @@ let dbReadyState = {
 
 // dbWorker variables used in status reporting
 const totalTrips    = 5827718; // required number of records in the Trips Collection
+let   tripsCount    = 0;       // initial count of records in Trips Collection
 let   trips         = 0;       // cumulative count of desired records from Divvy trip records
 let   tripsToLoad   = 0;       // trips goal for the files which have been opened
 let   tripsPosting  = 0;       // count of records which are in-process with the MongoDB server
@@ -32,6 +33,7 @@ module.exports = {
     dbReadyState = {
       ...dbReadyState,
       totalTrips   : totalTrips,
+      tripsCount   : tripsCount,
       trips        : trips,
       tripsToLoad  : tripsToLoad,
       inQ          : tripsQueue.length,
@@ -300,12 +302,13 @@ module.exports = {
   //* Trips ******************************
 
     // check the Trips model. 
-    db.Trips.countDocuments({}, (e,tripsCount) => {
+    db.Trips.countDocuments({}, (e,count) => {
       if (debug) {
         console.log(
-          `Trips:    ${tripsCount}${tripsCount>=totalTrips? '' : `, need ${totalTrips}`}`
+          `Trips:    ${count}${count>=totalTrips? '' : `, need ${totalTrips}`}`
         );
       }  
+      tripsCount = count;
       if (tripsCount >= totalTrips) {
         dbReadyState.TripsCollection = true;
         trialQuery();

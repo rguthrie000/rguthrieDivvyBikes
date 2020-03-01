@@ -76,7 +76,7 @@ app.use(passport.session());
 require("./routes/api-routes.js")(app);
 // For any other route request, send the main page.
 app.get("*", (req, res) => {
-  res.sendFile(path.dirname("client/build/index.html"));
+  res.sendFile(path.join(__dirname,'client/build/index.html'));
 });
 
 const PORT = process.env.PORT ? process.env.PORT : 3001;
