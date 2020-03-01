@@ -59,9 +59,10 @@ export default function App() {
     binTrips        : []
   });
 
-  const DB_BAD     = 0;
-  const DB_GOOD    = 1;
-  const DB_UNKNOWN = 2;
+  const DB_BAD             = 0;
+  const DB_GOOD            = 1;
+  const DB_UNKNOWN         = 2;
+  const DB_TRIPSLOADING    = 3;
   const [dbOkay,setDbOkay] = useState();
 
 //******************
@@ -91,14 +92,25 @@ export default function App() {
     });
   }
 
-  function dbReadyResponse(response) {
-    if (debug) {console.log(JSON.stringify(response));}
-    if (response.Users && response.Stations && response.Trips && response.TripsSorted) {
+  function dbReadyResponse(r) {
+    if (debug) {console.log(JSON.stringify(r));}
+    if (r.UsersCollection && r.StationsCollection && r.TripsCollection) {
       setDbOkay(DB_GOOD);
     } else {
-      setDbOkay(DB_BAD);
+      // not all good, no hope if either Users or Stations is false
+      if (!r.UsersCollection || !r.StationsCollection) {
+        setDbOkay(DB_BAD);
+      } else {
+        // TripsCollection is false. Is it because we're loading?
+        if (r.tripsPosting || r.inQ) {
+          setDbOkay(DB_TRIPSLOADING);
+        } else {
+          // oh well.
+          setDbOkay(DB_BAD);
+        } 
+      }
     }
-  }
+  }  
 
   function whereAmI(event) {
     event.preventDefault();
@@ -214,14 +226,14 @@ export default function App() {
     let value = event.target.value;
     setSearchOptions({
       ...searchOptions,
-      [name] : value === 'yes' ? true : false
+      [name] : searchOptions[name] ? false : true
     })
   };
 
   function handleClickStart(event) {
     event.preventDefault();
     let value = event.target.value;
-    setClickStart(value === 'start');
+    setClickStart(clickStart ? false : true);
   }
 
   function makeMinutesAndSeconds(seconds) {

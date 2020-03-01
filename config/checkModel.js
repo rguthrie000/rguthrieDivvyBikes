@@ -8,32 +8,44 @@ const csv        = require('csv-parser');
 const db         = require("../models");
 const debug      = require("../debug");
 
-const dbReadyState = {
-    Users       : false,
-    Stations    : false,
-    Trips       : false,
-    TripsSorted : true
+let dbReadyState = {
+    UsersCollection    : false,
+    StationsCollection : false,
+    TripsCollection    : false,
+    totalTrips         : 0,
+    trips              : 0,
+    tripsToLoad        : 0,
+    inQ                : 0,
+    tripsPosting       : 0,
 }
+
+// dbWorker variables used in status reporting
+const totalTrips    = 5827718; // required number of records in the Trips Collection
+let   trips         = 0;       // cumulative count of desired records from Divvy trip records
+let   tripsToLoad   = 0;       // trips goal for the files which have been opened
+let   tripsPosting  = 0;       // count of records which are in-process with the MongoDB server
+let   tripsQueue    = [];      // internal Q for buffering file records destined for MongoDB
 
 module.exports = {
 
   dbReady : () => {
-    return(dbReadyState)
+    dbReadyState = {
+      ...dbReadyState,
+      totalTrips   : totalTrips,
+      trips        : trips,
+      tripsToLoad  : tripsToLoad,
+      inQ          : tripsQueue.length,
+      tripsPosting : tripsPosting
+    };
+    return(dbReadyState);
   },
 
   checkModel : () => {
 
-    // desired number of records in the Stations and Trips tables/models
+    // dbWorker variables which aren't part of status reporting
     const totalStations = 611;
-    const totalTrips    = 5827718;
-
-    // dbWorker variables
     const totalChunks   = 59;   // count of files which collectively comprise 2018-2019 Divvy trip records
     let   chunksToLoad  = 0;    // down-counter for files remaining to be loaded
-    let   trips         = 0;    // cumulative count of desired records from Divvy trip records
-    let   tripsToLoad   = 0;
-    let   tripsPosting  = 0;    // count of records which are in-process with the MongoDB server
-    let   tripsQueue    = [];   // internal Q for buffering file records destined for MongoDB
     let   tHandle;              // timer handle; saved at timer registration to be used at de-registration
 
     // startDBworker() initializes dbWorker, which wakes periodically to supervise the process
@@ -78,13 +90,9 @@ module.exports = {
         loadAFile(filePrefix);
       }
       if (!chunksToLoad && inQ == 0 && tripsPosting == 0) {
-        if (debug) {
-          console.log(`Trips: loaded. sortErrors ${sortErrors.length}`);
-          console.log(sortErrors);
-        }
+        if (debug) {console.log(`Trips: loaded.`);}
         clearInterval(tHandle);
-        dbReadyState.Trips = true;
-        dbReadyState.TripsSorted = sortErrors? false : true;
+        dbReadyState.TripsCollection = true;
         trialQuery();
       }
     }
@@ -150,30 +158,28 @@ module.exports = {
       if (debug) {console.log('trial queries');}
 
       // Trips trial
+      // structure a query using the last record in the Collection
       const queryCheck = {
-        startTime     : 1561689720013,
-        tripDuration  : 463,
-        startStation  : 181,
-        endStation    : 111,
-        genderMale    : 0,
-        birthYear     : 1993
+        startTime     : 1577876220002,
+        tripDuration  : 120,
+        startStation  : 256,
+        endStation    : 240,
+        genderMale    : 1,
+        birthYear     : 1982
       };
 
-      // structure a query which is known to match only one record in the DB.
-      let ms = 1561689720013;
+      let ms = queryCheck.startTime;
       db.Trips.find({
         startTime   : { $gte: ms - 15*6000, $lte: ms + 15*6000+100 },
         birthYear   : { $gte:  1950, $lte:  2000 },
-        startStation: 181,
-        endStation  : 111,
-        genderMale  : 0
+        startStation: queryCheck.startStation,
+        endStation  : queryCheck.endStation,
+        genderMale  : queryCheck.genderMale
       }).
       sort({ startTime: 1 }).
-      // select({ tripDuration: 1, _id: 0 }).
-      // , startStation: 0, endStation: 0, genderMale:0, birthYear: 0 , _id: 0}).
       exec( (err, res) => {
         if (err) {
-          dbReadyState.Trips = false;
+          dbReadyState.TripsCollection = false;
         } else {
           if (
               res[0].startTime    == queryCheck.startTime    && 
@@ -185,7 +191,7 @@ module.exports = {
             if (debug) {
               console.log(res,'\nTrips: trial query successful');
             } else {
-              dbReadyState.Trips = false;
+              dbReadyState.TripsCollection = false;
             }
           }
         } // end Trips trial 
@@ -193,7 +199,7 @@ module.exports = {
         db.Stations.find({}).exec( (err, data) => {
           if (err) {
             if (debug) {console.log(err);}
-            dbReadyState.Stations = false;
+            dbReadyState.StationsCollection = false;
           } else {
             if (data.length == totalStations) {
               if (debug) {
@@ -202,7 +208,7 @@ module.exports = {
                 console.log('\nStations: trial query successful');
               }
             } else {
-              dbReadyState.Stations = false;
+              dbReadyState.StationsCollection = false;
             }
           } // end Stations trial
         }); // end Stations trial promise
@@ -224,7 +230,7 @@ module.exports = {
         );
       }
       if (usersCount >= 1) {
-        dbReadyState.Users = true;
+        dbReadyState.UsersCollection = true;
       } else {
         // Users is empty. Need 1 user for a trial Query! 
         db.Users.create({
@@ -237,12 +243,12 @@ module.exports = {
           // rowsAffected is an array whose first element is the number of rows affected.
           // here we expect either creation of one row, or zero rows if the userName
           // is not unique. 
-          dbReadyState.Users = rowsAffected? true : false;
+          dbReadyState.UsersCollection = rowsAffected? true : false;
           if (debug) {console.log(`Users:    Loaded (created user 'ChicagoDog').`)}
         })
         .catch( (err) => {
           if (debug) {console.log(err);}
-          dbReadyState.Users = false;
+          dbReadyState.UsersCollection = false;
         });
       }
     });  
@@ -258,7 +264,7 @@ module.exports = {
         );
       }
       if (stationsCount == totalStations) {
-        dbReadyState.Stations = true;
+        dbReadyState.StationsCollection = true;
       } else {
         // Stations is either empty or missing records. 
         // deleteMany() will truncate Stations...which
@@ -284,7 +290,7 @@ module.exports = {
                 // done when all requests have been processed
                 if (--stations == 0) {
                   if (debug) {console.log('Stations: loaded.');}
-                  dbReadyState.Stations = true;
+                  dbReadyState.StationsCollection = true;
                 }
               });
             })
@@ -302,7 +308,7 @@ module.exports = {
         );
       }  
       if (tripsCount >= totalTrips) {
-        dbReadyState.Trips = true;
+        dbReadyState.TripsCollection = true;
         trialQuery();
       } else {  
         //Trips is either empty or missing records. 
