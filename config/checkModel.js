@@ -12,6 +12,7 @@ let dbReadyState = {
     UsersCollection    : false,
     StationsCollection : false,
     TripsCollection    : false,
+    tripsCount         : 0,
     totalTrips         : 0,
     trips              : 0,
     tripsToLoad        : 0,
