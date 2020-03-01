@@ -89,7 +89,7 @@ module.exports = {
         tripsToLoad += filePrefix < totalChunks-1? 100000 : (totalTrips % 100000);
         loadAFile(filePrefix);
       }
-      if (!chunksToLoad && inQ == 0 && tripsPosting == 0) {
+      if (!chunksToLoad && !inQ && !tripsPosting) {
         if (debug) {console.log(`Trips: loaded.`);}
         clearInterval(tHandle);
         dbReadyState.TripsCollection = true;
@@ -170,27 +170,26 @@ module.exports = {
 
       let ms = queryCheck.startTime;
       db.Trips.find({
-        startTime   : { $gte: ms - 15*6000, $lte: ms + 15*6000+100 },
-        birthYear   : { $gte:  1950, $lte:  2000 },
-        startStation: queryCheck.startStation,
-        endStation  : queryCheck.endStation,
-        genderMale  : queryCheck.genderMale
+        startTime   : queryCheck.startTime
       }).
-      sort({ startTime: 1 }).
       exec( (err, res) => {
         if (err) {
           dbReadyState.TripsCollection = false;
         } else {
-          if (
+          if (!res.length) {
+            dbReadyState.TripsCollection = false;
+            if (debug) {console.log(res,'\nTrips: trial query failed - response empty.');}
+          } else {
+            if (  
               res[0].startTime    == queryCheck.startTime    && 
               res[0].tripDuration == queryCheck.tripDuration &&
               res[0].startStation == queryCheck.startStation && 
               res[0].endStation   == queryCheck.endStation   &&
               res[0].genderMale   == queryCheck.genderMale   && 
               res[0].birthYear    == queryCheck.birthYear     ) {
-            if (debug) {
-              console.log(res,'\nTrips: trial query successful');
-            } else {
+              if (debug) {console.log(res,'\nTrips: trial query successful');}
+            } else {  
+              if (debug) {console.log(res,'\nTrips: trial query failed - response incorrect.');}
               dbReadyState.TripsCollection = false;
             }
           }
