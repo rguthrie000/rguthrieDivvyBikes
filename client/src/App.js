@@ -125,7 +125,9 @@ export default function App() {
       startIndex     : closestStation.minIndex
     }); 
     tripsAPI.getDBready(dbReadyResponse);
-    tripsAPI.getTrips(stations,searchOptions,processTrips);
+    if (dbOkay === DB_GOOD) {
+      tripsAPI.getTrips(stations,searchOptions,processTrips);
+    }  
   }
 
   function mapClick({x, y, lat, lng}) {
