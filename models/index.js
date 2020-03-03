@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Float = require('mongoose-float').loadType(mongoose,8);
+require("dotenv").config();
 const debug = require("../debug");
 
 //*******************************
@@ -9,16 +10,19 @@ const debug = require("../debug");
 // set the db name here
 const dbName = "bikerides_db";
 
-mongoose.connect(
-  process.env.MONGODB_URI ? process.env.MONGODB_URI : ("mongodb://localhost/"+dbName), 
-  {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}
-);
+let URI  = 
+  'mongodb+srv://guthrie01:'+ process.env.passwordMongodb + 
+  '@cluster0-ow4jw.mongodb.net/' + dbName + "?retryWrites=true&w=majority";
+
+URI = process.env.MONGODB_URI ? process.env.MONGODB_URI : URI;
+
+mongoose.connect(URI,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true});
 
 if (debug) {
   if (process.env.MONGODB_URI) {
-    console.log(`heroku deployment; MongoDB Atlas at ${process.env.MONGODB_URI}`);
+    console.log(`heroku: using MongoDB Atlas at: ${process.env.MONGODB_URI}`);
   } else {
-    console.log('using local MongoDB');
+    console.log(`local: using MongoDB Atlas at: ${URI}`);
   }
 }
 
