@@ -1,10 +1,14 @@
 // import {debug} from "../debug";
 
 const divvyBox = {
-  latLo :  41.736646,
-  latHi :  42.064854,
-  lonLo : -87.774704,
-  lonHi : -87.549386
+  latLo       :  41.736646,
+  latHi       :  42.064854,
+  lonLo       : -87.774704,
+  lonHi       : -87.549386,
+  lkShoreNlat :  42.0650,
+  lkShoreNlon : -87.6734,
+  lkShoreSlat :  41.7365,
+  lkShoreSlon : -87.5250
 };
 const skewCoefficients = [
    65, 73,122, 97, 83,121, 65, 99, 65,116,104,100, 82,
@@ -17,6 +21,14 @@ export default {
   randLat     : () => (divvyBox.latLo + Math.random()*(divvyBox.latHi - divvyBox.latLo)),
 
   randLon     : () => (divvyBox.lonLo + Math.random()*(divvyBox.lonHi - divvyBox.lonLo)),
+
+  randLoc     : () => {
+    let lat = divvyBox.latLo + Math.random()*(divvyBox.latHi - divvyBox.latLo);
+    let slope = (divvyBox.lkShoreNlon - divvyBox.lkShoreSlon)/(divvyBox.lkShoreNlat-divvyBox.lkShoreSlat);
+    let lonHiLimit = slope*(lat-divvyBox.latLo)+divvyBox.lkShoreSlon;
+    let lon = divvyBox.lonLo + Math.random()*(lonHiLimit-divvyBox.lonLo);
+    return({lat: lat, lon: lon});
+  },
 
   divvyLimits : () => divvyBox,
 

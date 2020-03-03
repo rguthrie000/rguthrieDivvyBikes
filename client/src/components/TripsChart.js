@@ -5,33 +5,46 @@ import {
 import "./TripsChart.css"
 
 export default function TripsChart(props) {
+  const chartStyle = {
+    width: '400px',
+    height: 'auto'
+  };
+
   return (
     <>
-      <div className="chart-summary">
-        Average Ride Time <span id="average">{props.averageDuration}</span>
-      </div>
-      <div id="canvas">
-        <VictoryChart 
-          domainPadding={20} 
-          theme={VictoryTheme.material} 
-        >
-          <VictoryAxis
-            tickValues={props.labels}
-          />
-          <VictoryAxis
-            dependentAxis
-            tickFormat={(x) => (`${x}`)}
-          />
-          <VictoryBar
-            data={props.binTrips}
-            x={"bin"}
-            y={"trips"}
-          />
-        </VictoryChart>
-      </div>
-      <div className="chart-detail">
-        standard deviation <span id="std-dev">{props.stdDevDuration}</span>
-      </div>
+      {props.querying?
+      (
+        <div id="waitMsg">Waiting for results: {props.waitTime}</div>
+      ) :
+      (
+        <div className="chart-summary">
+          Most Ride Times: <span id="average">{props.modeDuration}{props.nextBin? ` - ${props.nextBin}`: ''}</span>
+          <div id="canvas" style={chartStyle}>
+            <VictoryChart 
+              domainPadding={10} 
+              theme={VictoryTheme.material} 
+            >
+              <VictoryAxis
+                tickValues={props.labels}
+              />
+              <VictoryAxis
+                dependentAxis
+                tickFormat={(x) => (`${x}`)}
+              />
+              <VictoryBar 
+                alignment={"start"}
+                barRatio = {1.25}
+                data={props.binTrips}
+                x={"bin"}
+                y={"trips"}
+              />
+            </VictoryChart>
+          </div>
+          <div className="chart-detail">
+            <p id="std-dev">trips: {props.trips ? props.trips:'-'}, standard deviation: {props.stdDevDuration ? props.stdDevDuration:'-'}</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

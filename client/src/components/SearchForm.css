@@ -73,7 +73,7 @@ label {
   padding: 0px 0px 0px 0px;
   font-weight: 600;
   color: white;
-  border: 1px solid magenta;
+  border: 1px solid black;
   border-radius: 15px;
   box-shadow: 2px 2px lightgray;
 }
@@ -160,31 +160,33 @@ label {
   left: 30px;
 }
 
-input {
+button {
   font-size: 10pt;
 }
-#radio-box-time,
-#radio-box-profile,
-#radio-box-location {
+#toggle-box-time,
+#toggle-box-profile,
+#toggle-box-location {
   position: absolute;
   width: 110px;
   height: 100px;
   padding: 0 0 0 5px;
   border: 1px solid black;
+  border-radius: 15px;
+  box-shadow: 2px 2px lightgray;
 }
-#radio-box-time {
+#toggle-box-time {
   top: 205px;
   left: 30px;
   font-size: 10pt;
 }
-#radio-box-profile {
+#toggle-box-profile {
   top: 205px;
-  left: 140px;
+  left: 147px;
   font-size: 10pt;
 }
-#radio-box-location {
+#toggle-box-location {
   top: 205px;
-  left:250px;
+  left:264px;
   background-color: rgb(170,218,255);
   font-size: 12pt;
   font-weight: 600;

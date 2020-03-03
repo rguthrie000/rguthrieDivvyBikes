@@ -158,8 +158,6 @@ module.exports = {
 
     function trialQuery() {
 
-      if (debug) {console.log('trial queries');}
-
       // Trips trial
       // structure a query using the first record in the Collection
       const queryCheck = {
@@ -181,7 +179,7 @@ module.exports = {
         } else {
           if (!res.length) {
             dbReadyState.TripsCollection = false;
-            if (debug) {console.log(res,'\nTrips: trial query failed - response empty.');}
+            if (debug) {console.log('Trips: trial query failed - response empty.');}
           } else {
             if (  
               res[0].startTime    == queryCheck.startTime    && 
@@ -190,9 +188,8 @@ module.exports = {
               res[0].endStation   == queryCheck.endStation   &&
               res[0].genderMale   == queryCheck.genderMale   && 
               res[0].birthYear    == queryCheck.birthYear     ) {
-              if (debug) {console.log(res,'\nTrips: trial query successful');}
             } else {  
-              if (debug) {console.log(res,'\nTrips: trial query failed - response incorrect.');}
+              if (debug) {console.log(res,'Trips: trial query failed - response incorrect.');}
               dbReadyState.TripsCollection = false;
             }
           }
@@ -200,16 +197,11 @@ module.exports = {
         // Stations trial
         db.Stations.find({}).exec( (err, data) => {
           if (err) {
-            if (debug) {console.log(err);}
+            if (debug) {console.log(err,'Stations: trial query failed - error.');}
             dbReadyState.StationsCollection = false;
           } else {
-            if (data.length == totalStations) {
-              if (debug) {
-                console.log(data[0]);
-                console.log(`...and ${data.length-1} more.`)
-                console.log('\nStations: trial query successful');
-              }
-            } else {
+            if (data.length != totalStations) {
+              if (debug) {console.log('Stations: trial query failed - not all Stations returned.');}
               dbReadyState.StationsCollection = false;
             }
           } // end Stations trial

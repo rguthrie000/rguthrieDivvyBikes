@@ -16,13 +16,17 @@ export default function MapCard({
 
   const Station = (props) => (
     <div style={{
-      color: 'white', 
+      color: props.textColor ? props.textColor : 'white', 
       background: props.bkgnd,
-      padding: '0px 1px',
+      padding: '0px 1px 0px 1px',
+      height: props.height? props.height : 'auto',
+      width: props.width? props.width : 'auto',
       display: 'inline-flex',
+      fontSize : props.fontSize? props.fontSize : '10px',
       textAlign: 'center',
       alignItems: 'center',
       justifyContent: 'center',
+      border: '1px solid black',
       borderRadius: '100%',
       transform: 'translate(-50%, -50%)'
     }}>
@@ -51,18 +55,28 @@ export default function MapCard({
           lat={centerLat} 
           lng={centerLon} 
           text={'loc'} 
+          height={'40px'}
+          width={'60px'}
+          fontSize={'24px'}
           bkgnd={'magenta'}
         />
         <Station 
           lat={startStation.stationLat}
           lng={startStation.stationLon}
           text={'start'} 
-          bkgnd={'green'}
+          textColor='green'
+          height={'40px'}
+          width={'60px'}
+          fontSize={'24px'}
+          bkgnd={'white'}
         />
         <Station
           lat={endStation.stationLat}
           lng={endStation.stationLon} 
           text={'dest'}
+          height={'40px'}
+          width={'60px'}
+          fontSize={'24px'}
           bkgnd={'red'}  
         />
       </GoogleMapReact> 

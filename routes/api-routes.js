@@ -134,14 +134,14 @@ module.exports = function(app) {
     let queryObj = {};
     queryObj.startStation = req.body.startStation;
     queryObj.endStation = req.body.endStation;
-    if (req.body.useStartTime) {
-      // input units are seconds, DB has startTime in milliseconds
-      let startLo = 1000*(req.body.startTime - req.body.startTol);
-      // add 0.1 second to upper limit to include records whose
-      // startTimes have been adjusted for uniqueness.
-      let startHi = 1000*(req.body.startTime + req.body.startTol) + 100;
-      queryObj.startTime = { $gte: startLo, $lte: startHi };
-    }
+    // if (req.body.useStartTime) {
+    //   // input units are seconds, DB has startTime in milliseconds
+    //   let startLo = 1000*(req.body.startTime - req.body.startTol);
+    //   // add 0.1 second to upper limit to include records whose
+    //   // startTimes have been adjusted for uniqueness.
+    //   let startHi = 1000*(req.body.startTime + req.body.startTol) + 100;
+    //   queryObj.startTime = { $gte: startLo, $lte: startHi };
+    // }
     // if (req.body.useGenderMale) {
     //   queryObj.genderMale = req.body.genderMale;
     // }
@@ -161,7 +161,7 @@ module.exports = function(app) {
         //   [{startTime: <startTime>, tripDuration: <tripDuration>}, ..., ]
 
         // but wait! before sending, need to convert DB startTimes to seconds
-        dataArr.forEach( (trip, i, arr) => arr[i].startTime = Math.floor(0.001*trip.startTime) );
+        // dataArr.forEach( (trip, i, arr) => arr[i].startTime = Math.floor(0.001*trip.startTime) );
         res.send(dataArr);
       }
     });

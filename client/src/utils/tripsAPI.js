@@ -40,27 +40,27 @@ export default  {
   //   useBirthYear, and if 1:
   //     birthYear
   //     ageTol
-  getTrips : (stations,searchOptions,cb) => {
+  getTrips : (startId,endId,searchOptions,cb) => {
     let queryObj = {
-      startStation : stations.list[stations.startIndex].stationId,
-      endStation   : stations.list[stations.endIndex].stationId,
-      useStartTime : false
+      startStation : startId,
+      endStation   : endId
+      // useStartTime : false
       // startTime    : Date.now() - (364*24*60*60),
       // startTol     : 7*24*3600
     };
     tArr = [];
     axios.post("/api/trips", queryObj).then( (res) => {
 
-      res.data.forEach( (t) => tArr.push({startTime: (t.startTime + 364*24*60*60), tripDuration: t.tripDuration}));
+      res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
       queryObj = {
         ...queryObj,
-        startStation : stations.list[stations.endIndex].stationId,
-        endStation   : stations.list[stations.startIndex].stationId,
+        startStation : endId,
+        endStation   : startId
         // startTime    : queryObj.startTime - 364*24*60*60
       };
 
       axios.post("/api/trips", queryObj).then( (res) => {
-        res.data.forEach( (t) => tArr.push({startTime: (t.startTime + 2*364*24*60*60), tripDuration: t.tripDuration}));
+        res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
         cb(tArr);
       });
     });
