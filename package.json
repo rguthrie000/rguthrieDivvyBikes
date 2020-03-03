@@ -28,6 +28,7 @@
     "google-map-react": "^1.1.6",
     "http-proxy-middleware": "^1.0.0",
     "if-env": "^1.0.4",
+    "mongodb": "^3.5.4",
     "mongoose": "^5.9.1",
     "mongoose-float": "^1.0.4",
     "passport": "^0.4.1",
