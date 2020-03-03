@@ -10,6 +10,7 @@ import "./App.css";
 
 let queryWait = false;
 let waitTimer = 0;
+let dbCheckCountdown = 5;
 
 export default function App() {
 
@@ -120,72 +121,76 @@ export default function App() {
 
   function whereAmI(event) {
     event.preventDefault();
-    console.log('setting queryWait');
-    let loc = geoMath.randLoc();
-    let lat = loc.lat;
-    let lng = loc.lon;
-    let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
-    let startId = stations.list[closestStation.minIndex].stationId;
-    let endId = stations.list[stations.endIndex].stationId;
-    tripsAPI.getDBready(dbReadyResponse);
+    if (dbOkay === DB_UNKNOWN) {
+      tripsAPI.getDBready(dbReadyResponse);
+    }  
     if (dbOkay === DB_GOOD) {
-      setSearchOptions({...searchOptions, waitForQuery : true, waitTime : 0});
+      let loc = geoMath.randLoc();
+      let lat = loc.lat;
+      let lng = loc.lon;
+      let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
+      let startId = stations.list[closestStation.minIndex].stationId;
+      let endId = stations.list[stations.endIndex].stationId;
+      tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
+      console.log('setting queryWait');
       queryWait = true;
       waitTimer = 0;
-      tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
+      setSearchOptions({...searchOptions, waitForQuery : true, waitTime : 0});
+      setStations({
+        ...stations,
+        latitude       : lat,
+        longitude      : lng,
+        minStationDist : closestStation.minDist,
+        startIndex     : closestStation.minIndex
+      }); 
+      if (debug) {console.log(`random start: lat ${lat}, lon ${lng}; startStation ${startId}, endStation ${endId}`);}
     }  
-    setStations({
-      ...stations,
-      latitude       : lat,
-      longitude      : lng,
-      minStationDist : closestStation.minDist,
-      startIndex     : closestStation.minIndex
-    }); 
-    if (debug) {console.log(`random start: lat ${lat}, lon ${lng}; startStation ${startId}, endStation ${endId}`);}
   }
 
   function mapClick({x, y, lat, lng}) {
 
-    tripsAPI.getDBready(dbReadyResponse);
-    console.log('setting queryWait');
-    let start   = 0;
-    let end     = 0;
-    let slat    = 0;
-    let slon    = 0;
-    let minDist = 0;
-
-    let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
-
-    if (searchOptions.chooseStart) {
-      start   = closestStation.minIndex;
-      end     = stations.endIndex;
-      slat    = lat;
-      slon    = lng;
-      minDist = closestStation.minDist;
-    } else {
-      start   = stations.startIndex;
-      end     = closestStation.minIndex;
-      slat    = stations.latitude;
-      slon    = stations.longitude;
-      minDist = stations.minStationDist;
-    }
-    let startId = stations.list[start].stationId;
-    let endId   = stations.list[end].stationId;
+    if (dbOkay === DB_UNKNOWN) {
+      tripsAPI.getDBready(dbReadyResponse);
+    }  
     if (dbOkay === DB_GOOD) {
+      console.log('setting queryWait');
+      let start   = 0;
+      let end     = 0;
+      let slat    = 0;
+      let slon    = 0;
+      let minDist = 0;
+
+      let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
+
+      if (searchOptions.chooseStart) {
+        start   = closestStation.minIndex;
+        end     = stations.endIndex;
+        slat    = lat;
+        slon    = lng;
+        minDist = closestStation.minDist;
+      } else {
+        start   = stations.startIndex;
+        end     = closestStation.minIndex;
+        slat    = stations.latitude;
+        slon    = stations.longitude;
+        minDist = stations.minStationDist;
+      }
+      let startId = stations.list[start].stationId;
+      let endId   = stations.list[end].stationId;
       setSearchOptions({...searchOptions, waitForQuery : true, waitTime : 0});
       queryWait = true;
       waitTimer = 0;
       tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
+      setStations({
+        ...stations,
+        latitude       : slat,
+        longitude      : slon,
+        minStationDist : minDist,
+        startIndex     : start,
+        endIndex       : end
+      });  
+      if (debug) {console.log(`map click @ cursor ${x},${y} --> lat ${lat}, lon ${lng}; startStation ${startId}, endStation ${endId}`);}
     }  
-    setStations({
-      ...stations,
-      latitude       : slat,
-      longitude      : slon,
-      minStationDist : minDist,
-      startIndex     : start,
-      endIndex       : end
-    });  
-    if (debug) {console.log(`map click @ cursor ${x},${y} --> lat ${lat}, lon ${lng}; startStation ${startId}, endStation ${endId}`);}
   }
 
   // these functions are kept separate so they cleanly match 
@@ -333,6 +338,16 @@ export default function App() {
       isAfternoon : flagsObj.isAfternoon,
       isEvening   : flagsObj.isEvening
     });
+    if (dbCheckCountdown >= 0) {
+      if (dbOkay === DB_UNKNOWN) {
+        if (--dbCheckCountdown === 0) {
+          tripsAPI.getDBready(dbReadyResponse);
+          dbCheckCountdown = 5;
+        }
+      } else {
+        dbCheckCountdown = -1;
+      }
+    }
   }
 
   return (

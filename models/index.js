@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Float = require('mongoose-float').loadType(mongoose,8);
-const MongoClient = require('mongodb').MongoClient;
+const debug = require("../debug");
 
 //*******************************
 //***   Database Connection   ***
@@ -15,7 +15,7 @@ mongoose.connect(
 );
 
 if (debug) {
-  if (process.env.MONGODB.URI) {
+  if (process.env.MONGODB_URI) {
     console.log(`heroku deployment; MongoDB Atlas at ${process.env.MONGODB_URI}`);
   } else {
     console.log('using local MongoDB');
