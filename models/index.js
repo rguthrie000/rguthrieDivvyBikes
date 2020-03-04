@@ -24,6 +24,8 @@ if (process.env.MONGODB_URI) {
       // 3. otherwise use the local MongoDB installation:
       URI = "mongodb://localhost/" + dbName;
   }    
+}
+if (debug) {console.log(`MongoDB connection URI: ${URI}`);}
 mongoose.connect(URI,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
   .then ( ()    => {if (debug) console.log("DB connected" );})
   .catch( (err) => {if (debug) console.log("DB error:",err);});
