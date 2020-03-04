@@ -8,24 +8,26 @@ const debug = require("../debug");
 //*******************************
 
 // set the db name here
-mongoose.connect(
-  process.env.MONGODB_URI ? process.env.MONGODB_URI : ("mongodb://localhost/"+dbName), 
-  {useNewUrlParser: true, useUnifiedTopology: true}
-);
 const dbName = "bikerides_db";
 
-// Options for database connection:
+// Connect to database
+let URI = '';
 // 1. if heroku's MONGODB_URI exists, use it. (points to MongoDB Atlas)
-let URI = process.env.MONGODB_URI ? process.env.MONGODB_URI : 
-  (process.env.useAtlas ? 
-// 2. (not heroku) if useAtlas is defined in file .env, use MongoDB Atlas:  
-  ('mongodb+srv://guthrie01:'+ process.env.passwordMongodb + 
-  '@cluster0-ow4jw.mongodb.net/' + dbName + "?retryWrites=true&w=majority")
-  :  
-// 3. otherwise use the local MongoDB installation:
-  ("mongodb://localhost/"+dbName));
+if (process.env.MONGODB_URI) {
+    URI = process.env.MONGODB_URI; 
+} else {
+  // 2. Ok, not heroku. if useAtlas is defined in file .env, use MongoDB Atlas:  
+  if (process.env.useAtlas) { 
+    URI = 'mongodb+srv://guthrie01:'+ process.env.passwordMongodb + 
+          '@cluster0-ow4jw.mongodb.net/' + dbName + "?retryWrites=true&w=majority";
+  } else {
+      // 3. otherwise use the local MongoDB installation:
+      URI = "mongodb://localhost/" + dbName;
+  }    
+mongoose.connect(URI,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
+  .then ( ()    => {if (debug) console.log("DB connected" );})
+  .catch( (err) => {if (debug) console.log("DB error:",err);});
 
-mongoose.connect(URI,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true});
 
 if (debug) {console.log(`MongoDB: ${URI}`);}
 
