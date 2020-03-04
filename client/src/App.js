@@ -10,7 +10,6 @@ import "./App.css";
 
 let queryWait = false;
 let waitTimer = 0;
-let dbCheckCountdown = 5;
 
 export default function App() {
 
@@ -338,16 +337,6 @@ export default function App() {
       isAfternoon : flagsObj.isAfternoon,
       isEvening   : flagsObj.isEvening
     });
-    if (dbCheckCountdown >= 0) {
-      if (dbOkay === DB_UNKNOWN) {
-        if (--dbCheckCountdown === 0) {
-          tripsAPI.getDBready(dbReadyResponse);
-          dbCheckCountdown = 5;
-        }
-      } else {
-        dbCheckCountdown = -1;
-      }
-    }
   }
 
   return (

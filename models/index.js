@@ -25,15 +25,11 @@ if (process.env.MONGODB_URI) {
       URI = "mongodb://localhost/" + dbName;
   }    
 }
-if (debug) {console.log(`MongoDB connection URI: ${URI}`);}
 mongoose.connect(URI,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
-  .then ( ()    => {if (debug) console.log("DB connected" );})
-  .catch( (err) => {if (debug) console.log("DB error:",err);});
+  .then ( ()    => {if (debug) console.log(`.models/index.js: MongoDB connected using URI ${URI}`);})
+  .catch( (err) => {if (debug) console.log(`.models/index.js: MongoDB connection error using URI ${URI}: ${err}`);});
 
-
-if (debug) {console.log(`MongoDB: ${URI}`);}
-
-// Get the connection
+// Get the connection 'handle'
 const db = mongoose.connection;
 
 // Bind connection to error event (to get notification of connection errors)

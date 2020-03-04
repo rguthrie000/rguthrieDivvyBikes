@@ -11,7 +11,7 @@ const debug      = require("../debug");
 let dbReadyState = {
     UsersCollection    : false,
     StationsCollection : false,
-    TripsCollection    : false,
+    TripsCollection    : true,
     tripsCount         : 0,
     totalTrips         : 0,
     trips              : 0,
