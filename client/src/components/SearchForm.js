@@ -31,7 +31,7 @@ function SearchForm(props) {
           </div>
         </div>
         <div id="button-random">
-          <button id={dbStyle()} className="button-random" onClick={props.whereAmI}>random</button>
+          <button id={dbStyle()} className="button-random" onClick={props.whereAmI}>random location</button>
         </div>  
         <p id="minDistance">from this location, {props.minStationDist} miles to:</p>
         <div>

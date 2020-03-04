@@ -65,9 +65,9 @@ label {
 
 .button-random {
   position: absolute;
-  top: 34px;
+  top: 32px;
   left: 260px;
-  height: 35px;
+  height: 39px;
   width: 100px;
   margin: 10px 0 0 5px;
   padding: 0px 0px 0px 0px;
@@ -174,12 +174,12 @@ button {
   border-radius: 15px;
   box-shadow: 2px 2px lightgray;
 }
-#toggle-box-time {
+#toggle-box-profile {
   top: 205px;
   left: 30px;
   font-size: 10pt;
 }
-#toggle-box-profile {
+#toggle-box-time {
   top: 205px;
   left: 147px;
   font-size: 10pt;

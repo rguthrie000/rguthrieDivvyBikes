@@ -20,9 +20,7 @@ export default function App() {
   const [searchOptions,setSearchOptions] = useState({
       chooseStart  : true,
       useTime      : false,
-      useProfile   : false,
-      waitForQuery : false,
-      waitTime     : 0
+      useProfile   : false
   });
 
   // Station list. A station:
@@ -37,7 +35,7 @@ export default function App() {
     populated      : false,
     centerSkew     : geoMath.centerSkew(),
     startIndex     : 564,
-    endIndex       : 299,
+    endIndex       : 72,  // Station 43, Michigan Ave & Washington St (train station 'Millennium')
     list           : [],
     latitude       : geoMath.randLat(),
     longitude      : geoMath.randLoc().lon,
@@ -63,6 +61,25 @@ export default function App() {
     labels         : [],
     binTrips       : []
   });
+
+  // state hook not working from interrupt context;
+  // tried to use this:
+  // const [queryWait,setQueryWait] = useState({
+  //   queryWaiting : false,
+  //   waitTimer    : 0
+  // })
+  // but instead have to use this (global variables defined above)
+
+  const setQueryWait = (waiting, action) => {
+    queryWait = waiting;
+    switch (action) {
+      case 'running' : waitTimer++;   break;
+      case 'reset'   :
+      default        : waitTimer = 0; break;
+    }
+    return(waitTimer);
+  }
+  const getQueryWait = () => queryWait;
 
   const DB_BAD             = 0;
   const DB_GOOD            = 1;
@@ -132,9 +149,7 @@ export default function App() {
       let endId = stations.list[stations.endIndex].stationId;
       tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
       console.log('setting queryWait');
-      queryWait = true;
-      waitTimer = 0;
-      setSearchOptions({...searchOptions, waitForQuery : true, waitTime : 0});
+      setQueryWait(true,'reset');
       setStations({
         ...stations,
         latitude       : lat,
@@ -176,9 +191,7 @@ export default function App() {
       }
       let startId = stations.list[start].stationId;
       let endId   = stations.list[end].stationId;
-      setSearchOptions({...searchOptions, waitForQuery : true, waitTime : 0});
-      queryWait = true;
-      waitTimer = 0;
+      setQueryWait(true,'reset');
       tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
       setStations({
         ...stations,
@@ -279,10 +292,7 @@ export default function App() {
         binTrips        : binTrips
       });
     }
-    setSearchOptions({...searchOptions, waitForQuery : false, waitTime : 0});
-    queryWait = false;
-    waitTimer = 0;
-    console.log('clearing queryWait');
+    setQueryWait(false,'reset');
   }
 
   function handleToggle(event) {
@@ -317,15 +327,9 @@ export default function App() {
     return(min+':'+sec);
   }
 
-  const getQueryWait = () => queryWait;
-
   function clock() { 
     if (getQueryWait()) {
-      waitTimer++;
-      setSearchOptions({
-        ...searchOptions,
-        waitTime : searchOptions.waitTime + 1
-      });
+      setQueryWait(true,'running');
     };
     let tStr = getTimeStr();
     let flagsObj = getTimeFlags(tStr);
@@ -384,7 +388,7 @@ export default function App() {
           </div>
           <div className="row chart-card">
             <TripsChart
-              querying       ={queryWait}
+              querying       ={getQueryWait()}
               waitTime       ={makeMinutesAndSeconds(waitTimer)}
               minDuration    ={statsAndCharts.minDuration}
               maxDuration    ={statsAndCharts.maxDuration}
