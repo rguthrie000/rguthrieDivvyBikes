@@ -1,32 +1,18 @@
-// server.js - Bike Planner server-side entry point and initialization file.
+// server.js - Divvy Bikes Planner server-side entry point and initialization file.
 //
-// This version of server.js is (nearly) generic for a server-client
-// Web App with User Authentication via passport/express-session, 
-// and a mySQL database behind the sequelize ORM.
-
-//@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@
-//@*@*@                                     @*@*@
-//@*@*@      mySQL SETUP IS REQUIRED!       @*@*@
-//@*@*@                                     @*@*@
-//@*@*@  1. The repo has not given you a    @*@*@
-//@*@*@     file with a mySQL password.     @*@*@
-//@*@*@     In your repo directory, create  @*@*@
-//@*@*@     file '.env' with:               @*@*@
-//@*@*@     password=<your password>        @*@*@
-//@*@*@                                     @*@*@
-//@*@*@     Make sure your repo manager     @*@*@
-//@*@*@     is ignoring file '.env'!        @*@*@
-//@*@*@                                     @*@*@
-//@*@*@  2. The username is 'root' in file  @*@*@
-//@*@*@     './config/config.json'. Change  @*@*@
-//@*@*@     to your username if different.  @*@*@
-//@*@*@                                     @*@*@
-//@*@*@  3. If you are using the app        @*@*@
-//@*@*@     locally, you must first create  @*@*@
-//@*@*@     mySQL database 'barbuddy_db'.   @*@*@
-//@*@*@     No tables are needed.           @*@*@
-//@*@*@                                     @*@*@
-//@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@*@
+// This version of server.js is (nearly) generic for a MERN application with 
+// User Authentication via passport/express-session.
+//
+// Three passwords/keys are needed for full functionality of this app:
+//
+//   REACT_APP_GEOKEY is the Google Maps API key
+//   passwordKeyPhrase is the session 'secret' for user authentication
+//   passwordMongodb is the MongoDB Atlas password
+//
+// On heroku, the first two values are provided as 'Config Vars', and the
+// third is provided by changing the MONGODB_URI environment variable to
+// be the full DB access URL provided by MongoDB Atlas. That URL embeds 
+// passwordMongodb.
 
 //********************
 //*   Dependencies   *
@@ -49,11 +35,7 @@ require("dotenv").config();
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// app.set('trust proxy', 'loopback') // specify a single subnet
 
-
-// app.use(res.header("Access-Control-Allow-Origin", "*"));
-// app.use(res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept"));
 // When deployed, identify home for client assets
 // (during development, server and client are on the
 // same machine; the react client app will load the
@@ -64,7 +46,7 @@ if (process.env.NODE_ENV === "production") {
 // Session specification - session is established on valid login
 app.use(
   session({
-    secret: 'profoundkeyphrase',
+    secret: process.env.passwordKeyPhrase,
     resave: true,
     saveUninitialized: true
   })
@@ -81,14 +63,15 @@ app.get("*", (req, res) => {
 
 const PORT = process.env.PORT ? process.env.PORT : 3001;
 
-// load and run index.js in the ./models directory
+// configure the db models and connect to the db --
+// this 'require' will run the index.js file in the
+// 'models' directory.
 const db = require('./models');
 
+// check the db; load collections as needed.
 checkModel();
 
 // Be the Server
 app.listen(PORT, () => {
   if (debug) {console.log(`Serving PORT ${PORT}`);}
 });
-
-

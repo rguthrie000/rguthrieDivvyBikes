@@ -5,6 +5,12 @@ let tArr = [];
 
 export default  {
   
+  getKey : (cb) => {
+    axios.get("/api/getkey").then( (res) => {
+      cb(res.data);
+    });  
+  },
+
   getDBready : (cb) => {
     axios.get("/api/dbready").then( (res) => {
       cb(res.data);

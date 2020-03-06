@@ -1,8 +1,19 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import "./index.css";
-import App from "./App";
+import tripsAPI              from "./utils/tripsAPI";
+import React                 from "react";
+import ReactDOM              from "react-dom";
+import App                   from "./App";
 import registerServiceWorker from "./registerServiceWorker";
+import "./index.css";
 
-ReactDOM.render(<App />, document.getElementById("root"));
-registerServiceWorker();
+// fetch Google Maps API key from our server.
+// the react engine is then started from the callback,
+// so the key has been provided *before* the first
+// react render.
+tripsAPI.getKey(startReact);
+
+function startReact(key) {
+  console.log(`REACT_APP_GEOKEY ${key}`);
+  App.postKey(key);
+  ReactDOM.render(<App.App />, document.getElementById("root"));
+  registerServiceWorker();
+};

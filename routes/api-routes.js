@@ -4,11 +4,13 @@
 //   1. User Profile & Authentication: (signup with birthYear and gender, 
 //      login - session start / logout - end session). Uses the 'Users' model.
 //
-//   2. Delivers the list of Stations so the client can relate stations to the 
+//   2. Delivers the Google Maps API key
+//
+//   3. Delivers the list of Stations so the client can relate stations to the 
 //      map and make trips queries using start and end station numbers. Uses the
 //      'Stations' model.
 //
-//   3. Delivers trip startTimes and durations for a selected station start and end
+//   4. Delivers trip startTimes and durations for a selected station start and end
 //      pair. The Query can be further restricted by time range, gender, and 
 //      birthyear range. Uses the 'Trips' model.
 
@@ -17,6 +19,7 @@ const db         = require("../models/index");
 const passport   = require("../config/passport");
 const debug      = require("../debug");
 const {dbReady}  = require('../config/checkModel.js');
+require("dotenv").config();
 
 let currentUserName = '';
 
@@ -96,6 +99,11 @@ module.exports = function(app) {
   //})
 
   //* api routes ***********************************
+
+  app.get("/api/getkey", (req,res) => {
+    if (debug) {console.log('geokey requested');}
+    res.send(process.env.REACT_APP_GEOKEY);
+  });
 
   app.get("/api/dbready", (req,res) => {
     if (debug) {console.log('dbReady requested');}
