@@ -12,7 +12,6 @@ import "./index.css";
 tripsAPI.getKey(startReact);
 
 function startReact(key) {
-  console.log(`REACT_APP_GEOKEY ${key}`);
   App.postKey(key);
   ReactDOM.render(<App.App />, document.getElementById("root"));
   registerServiceWorker();
