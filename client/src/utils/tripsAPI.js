@@ -2,7 +2,6 @@
 // for retrieval of User info, Stations, and Trips.
 import axios   from "axios";
 // import {debug} from "../debug"
-let tArr = [];
 
 export default  {
   
@@ -36,38 +35,48 @@ export default  {
   },
 
   // getTrips() 
-  // expected elements in req.body:
-  //   startStation
-  //   endStation
-  //   useStartTime, and if 1:
-  //     startTime
-  //     startTol
-  //   useGenderMale, and if 1:
-  //     genderMale
-  //   useBirthYear, and if 1:
-  //     birthYear
-  //     ageTol
-  getTrips : (startId,endId,searchOptions,cb) => {
+  // expected elements in req.body      input arguments
+  //   startStation                       startId
+  //   endStation                         endId
+  //   useTime                            searchOptions.useTime
+  //   useGender, and if 1:               searchOptions.useProfile
+  //     genderMale                       user.genderMale
+  //   useBirthYear, and if 1:            searchOptions.useProfile
+  //     birthYear                        user.birthYear
+  //     ageTol                           searchOptions.ageTol
+  getTrips : (startId,endId,searchOptions,user,cb) => {
     let queryObj = {
       startStation : startId,
-      endStation   : endId
-      // useStartTime : false
-      // startTime    : Date.now() - (364*24*60*60),
-      // startTol     : 7*24*3600
+      endStation   : endId,
+      useGender    : searchOptions.useProfile,
+      genderMale   : (user.gender === 'male' ? 1 : 0),
+      useBirthYear : searchOptions.useProfile,
+      birthYear    : user.birthYear,
+      ageTol       : searchOptions.ageTol 
     };
-    tArr = [];
+
+    let tArr = [];
+
+    // we want trips from start to dest, and dest to start, 
+    // but not start to start, and not dest to dest.
+
+    // so begin with start to dest
     axios.post("/api/trips", queryObj).then( (res) => {
 
       res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
+
+      // then add trips from dest to start
       queryObj = {
         ...queryObj,
         startStation : endId,
         endStation   : startId
-        // startTime    : queryObj.startTime - 364*24*60*60
       };
-
       axios.post("/api/trips", queryObj).then( (res) => {
         res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
+        // ok, that's the lot...filter for time of week?
+        // if (searchOptions.useTime) {
+        //  
+        // }
         cb(tArr);
       });
     });

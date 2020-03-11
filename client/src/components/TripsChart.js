@@ -7,7 +7,7 @@ import "./TripsChart.css"
 
 export default function TripsChart(props) {
   const chartStyle = {
-    width: '400px',
+    width: '100%',
     height: 'auto'
   };
 

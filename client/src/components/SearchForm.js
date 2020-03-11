@@ -32,7 +32,7 @@ function SearchForm(props) {
   const minStationDist = () => {return(props.stations.populated? props.stations.minStationDist.toPrecision(3)               : '');}
   const profileText    = () => {
     return(props.user.userName ? 
-      (`Use user profile? ${props.options.useProfile ? 'profile' : 'all users'}`) 
+      (`Use user profile? ${props.searchOptions.useProfile ? 'profile' : 'all users'}`) 
       :
       ('click for LogIn to use profile')
     );
@@ -83,7 +83,7 @@ function SearchForm(props) {
           name="useTime"
           onClick={props.handleToggle}
         >
-          Use day & time? {props.options.useTime ? 'day of week' : 'anytime'}
+          Use day & time? {props.searchOptions.useTime ? 'day of week' : 'anytime'}
         </button>
         {/* Need a logged in user to have profile information */}
         <button id="toggle-box-profile"
@@ -96,7 +96,7 @@ function SearchForm(props) {
           name="chooseStart"
           onClick={props.handleToggle}
         >
-          Map click: {props.options.chooseStart ? 'start' : 'destination'}
+          Map click: {props.mapOptions.chooseStart ? 'start' : 'destination'}
         </button>
       </div>
     </>

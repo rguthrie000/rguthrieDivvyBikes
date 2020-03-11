@@ -1,51 +1,52 @@
 .search-box {
-  position: relative;
-  height: 350px;
+  position: absolute;
+  width: 100%;
+  height: 100%;
   margin: 10px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
   text-align: left;
   font-size: 10pt;
   font-weight: 500;
-  border: 2px solid black;
-  border-radius: 10px;
-  box-shadow: 4px 2px;
+  border: 1px solid black;
+  border-radius: 2px;
+  box-shadow: 4px 2px gray;
 }
 
 #timedate {
   position: absolute;
-  top: 15px;
-  left: 20px;
+  top: 5px;
+  left: 10px;
   font-size: 12pt;
   text-shadow: 1px 1px;
 }
 
 #timecat {
   position: absolute;
-  top: 15px;
-  left: 250px;
-  font-size: 10pt;
+  top: 25px;
+  left: 10px;
+  font-size: 75%;
   text-shadow: 1px 1px;
 }
 
 label {
-  font-size: 10pt;
+  font-size: 80%;
 }
 
 #position-lat-label {
   position:absolute;
-  top: 35px;
-  left: 30px;
+  top: 40px;
+  left: 10px;
 }
 
 #position-lon-label {
   position:absolute;
-  top: 35px;
-  left: 140px;
+  top: 40px;
+  left: 120px;
 }
 
 #position-lat, #position-lon {
   position: absolute;
-  top: 50px;
+  top: 55px;
   height: 22px;
   width: 100px;
   margin: auto;
@@ -54,19 +55,17 @@ label {
   border-radius: 2px;
   box-shadow: 4px 2px gray;
 }
-
 #position-lat {
-  left: 30px;
+  left: 10px;
 }
-
 #position-lon {
-  left: 140px;
+  left: 120px;
 }
 
 .button-random {
   position: absolute;
-  top: 32px;
-  left: 260px;
+  top: 37px;
+  left: 231px;
   height: 39px;
   width: 100px;
   margin: 10px 0 0 5px;
@@ -100,9 +99,10 @@ label {
 
 #minDistance {
   position: absolute;
-  top : 75px;
-  left: 25px;
+  top : 80px;
+  left: 10px;
   height: 20px;
+  font-size: 12pt;
   text-shadow: 1px 1px;
 }
 
@@ -116,44 +116,44 @@ label {
   border-radius: 2px;
   box-shadow: 4px 2px lightgray;
 }
+#start-station-id-label {
+  position:absolute;
+  top: 105px;
+  left: 10px;
+}
+
 #start-station-id {
-  top: 115px;
-  left: 30px;
-  width: 40px;
+  top: 120px;
+  left: 10px;
+  width: 35px;
   height: 30px;
 }
 
 #start-station {
-  top: 115px;
-  left: 70px;
-  width: 305px;
-  height: 30px;
-}
-
-#start-station-id-label {
-  position:absolute;
-  top: 100px;
-  left: 30px;
-}
-
-#end-station-id {
-  top: 165px;
-  left: 30px;
-  width: 40px;
-  height: 30px;
-}
-
-#end-station {
-  top: 165px;
-  left: 70px;
-  width: 305px;
+  top: 120px;
+  left: 45px;
+  min-width: 240px;
   height: 30px;
 }
 
 #end-station-id-label {
   position:absolute;
-  top: 150px;
-  left: 30px;
+  top: 155px;
+  left: 10px;
+}
+
+#end-station-id {
+  top: 170px;
+  left: 10px;
+  width: 35px;
+  height: 30px;
+}
+
+#end-station {
+  top: 170px;
+  left: 45px;
+  min-width: 240px;
+  height: 30px;
 }
 
 button {
@@ -163,26 +163,24 @@ button {
 #toggle-box-profile,
 #toggle-box-location {
   position: absolute;
-  width: 110px;
-  height: 100px;
+  top: 210px;
+  width: 95px;
+  height: 90px;
   padding: 0 0 0 5px;
   border: 1px solid black;
   border-radius: 15px;
   box-shadow: 2px 2px lightgray;
 }
 #toggle-box-profile {
-  top: 205px;
-  left: 30px;
+  left: 10px;
   font-size: 10pt;
 }
 #toggle-box-time {
-  top: 205px;
-  left: 147px;
+  left: 120px;
   font-size: 10pt;
 }
 #toggle-box-location {
-  top: 205px;
-  left:264px;
+  left: 230px;
   background-color: rgb(170,218,255);
   font-size: 12pt;
   font-weight: 600;
@@ -191,5 +189,30 @@ button {
 #toggle-box-profile:hover,
 #toggle-box-location:hover {
   height: 105px;
-  width: 115px;
+  width: 105px;
 }
+
+/* Responsive coding using breakpoints */
+
+/* Width at 991px and below */
+@media screen and (max-width: 991px) {
+  #timedate {
+    font-size: 7pt;
+  }
+
+  #minDistance {
+    font-size: 7pt;
+  }
+}
+
+/* Width at 359px and below */
+@media screen and (max-width: 359px) {
+  #timedate {
+    font-size: 7pt;
+  }
+
+  #minDistance {
+    font-size: 7pt;
+  }
+}
+

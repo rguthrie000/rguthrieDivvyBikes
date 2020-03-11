@@ -30,7 +30,7 @@ export default {
       count  = trips.length;
       mean   = trips.reduce((acc,t) => acc + t.tripDuration, 0) / count;
       stdDev = Math.sqrt(trips.reduce(
-      (acc,t) => acc + (t.tripDuration-mean)**2, 0) / (count > 1 ? count-1 : 1));
+        (acc,t) => acc + (t.tripDuration-mean)**2, 0) / (count > 1 ? count-1 : 1));
     }
 
     if (debug) {console.log(`trips (after 3-sigma filter) ${count}: mean ${mean}, standard deviation ${stdDev}`);}
@@ -48,6 +48,7 @@ export default {
       durationStep = 0;
     } else {
       baseDuration = mean - ((CHART_BINS-1)/4-0.25)*stdDev;
+      baseDuration = baseDuration < 0? 0 : baseDuration;
       durationStep = 0.5*stdDev;
       let t = 0;
       for (let b = 0; b < CHART_BINS; b++) {

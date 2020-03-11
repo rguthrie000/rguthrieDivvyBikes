@@ -186,39 +186,29 @@ module.exports = function(app) {
     });
   });
 
+  // Trips Query
+  // expected elements in req.body      input arguments
+  //   startStation                       startId
+  //   endStation                         endId
+  //   useGender, and if 1:               searchOptions.useProfile
+  //     genderMale                       user.genderMale
+  //   useBirthYear, and if 1:            searchOptions.useProfile
+  //     birthYear                        user.birthYear
+  //     ageTol                           searchOptions.ageTol
   app.post("/api/trips", (req, res) => {
-    // expected elements in req.body:
-    //
-    //   startStation
-    //   endStation
-    //   useStartTime, and if 1:
-    //     startTime
-    //     startTol
-    //   useGenderMale, and if 1:
-    //     genderMale
-    //   useBirthYear, and if 1:
-    //     birthYear
-    //     ageTol
-
+    // build the query filter on start, end, and any restrictions for gender and age.
+    if (debug) {console.log(`trips query, ${JSON.stringify(req.body)}`);}
     let queryObj = {};
     queryObj.startStation = req.body.startStation;
-    queryObj.endStation = req.body.endStation;
-    // if (req.body.useStartTime) {
-    //   // input units are seconds, DB has startTime in milliseconds
-    //   let startLo = 1000*(req.body.startTime - req.body.startTol);
-    //   // add 0.1 second to upper limit to include records whose
-    //   // startTimes have been adjusted for uniqueness.
-    //   let startHi = 1000*(req.body.startTime + req.body.startTol) + 100;
-    //   queryObj.startTime = { $gte: startLo, $lte: startHi };
-    // }
-    // if (req.body.useGenderMale) {
-    //   queryObj.genderMale = req.body.genderMale;
-    // }
-    // if (req.body.useBirthYear) {
-    //   let bYrLo   = req.body.birthYear - req.body.ageTol;
-    //   let bYrHi   = req.body.birthYear + req.body.ageTol;
-    //   queryObj.birthYear = { $gte:   bYrLo, $lte:   bYrHi };
-    // }
+    queryObj.endStation   = req.body.endStation;
+    if (req.body.useGender) {
+      queryObj.genderMale = req.body.genderMale;
+    }
+    if (req.body.useBirthYear) {
+      let bYrLo   = parseInt(req.body.birthYear) - parseInt(req.body.ageTol);
+      let bYrHi   = parseInt(req.body.birthYear) + parseInt(req.body.ageTol);
+      queryObj.birthYear = { $gte:   bYrLo, $lte:   bYrHi };
+    }
     if (debug) {console.log(`trips requested, ${JSON.stringify(queryObj)}`);}
     db.Trips.find(queryObj).
     select({ startTime: 1, tripDuration: 1 }).
@@ -229,9 +219,6 @@ module.exports = function(app) {
       } else {
         // because of the 'select' filter, the response form is:
         //   [{startTime: <startTime>, tripDuration: <tripDuration>}, ..., ]
-
-        // but wait! before sending, need to convert DB startTimes to seconds
-        // dataArr.forEach( (trip, i, arr) => arr[i].startTime = Math.floor(0.001*trip.startTime) );
         res.send(dataArr);
       }
     });

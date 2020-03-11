@@ -86,11 +86,63 @@
   font-size: 4rem;
 }
 
-.info-card {
-  height: 320px;
-  width: 365px;
+.info-card,
+.chart-card {
+  position: relative;
+  width: 100%;
   margin: 10px 0 0 1px;
   border-radius: 5px;
   border: solid 1px black;
   box-shadow: 2px 4px lightgray;
 }
+.info-card {
+  height: 320px;
+}
+.chart-card {
+  height: 420px;
+}
+
+
+@-ms-viewport{
+  width: device-width;
+}
+
+/* Responsive coding using breakpoints */
+
+/* Width at 991px and below */
+@media screen and (max-width: 991px) {
+  .container {
+    width: 90%;
+    padding: 10px;
+  }
+  .info-card,
+  .chart-card {
+    border: solid 0px black;
+    box-shadow: 0px 0px;
+  }
+  .AppBar-title {
+    display: none;
+  }
+
+  #user {  
+    color: black;
+  }
+
+}
+
+/* Width at 359px and below */
+@media screen and (max-width: 359px) {
+  body {
+    background-color: #333;
+  }
+  
+  .AppBar-title {
+    display: none;
+  }
+
+  .container {
+    width: 90%;
+    padding: 20px;
+  }
+}
+

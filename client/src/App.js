@@ -16,7 +16,7 @@ import LogInSignUp from "./components/LogInSignUp";
 //*********************************
 
 // Storage for Google Maps API key (provided by our server)
-// This value must be in scope prior to React's use of the App
+// This value must be in scope prior to React instantiation.
 // function.
 let geoKey = '';
 
@@ -69,11 +69,20 @@ export default {
       showLogin : false
     });
 
+    const [mapOptions,setMapOptions] = useState({
+      chooseStart : true    // map click selector - Start or Dest
+    });
+
     // user options
+    //   useTime
+    //   useProfile, and if 1:
+    //     genderMale
+    //     birthYear
+    //     ageTol
     const [searchOptions,setSearchOptions] = useState({
-      chooseStart : true,
-      useTime     : false,
-      useProfile  : false
+      useTime     : false,  // restrict query by time of week (weekday or weekends+holidays) or use all times
+      useProfile  : false,  // restrict query by gender+age or find all rides
+      ageTol      : 5       // age half-window width (if useProfile, find only birthYear-ageTol to birthYear+ageTol)
     });
 
     // stations is the set of variables used for the main elements used in the Map and for searching.
@@ -131,16 +140,26 @@ export default {
     
     // When ready...
     React.useEffect( () => {
+        // initialization only
         if (!stations.list.length) {
           setInterval(clock,1000);
           setDbOkay(DB_UNKNOWN);
           tripsAPI.getDBready(dbReadyResponse);
           tripsAPI.getStations(setStationsList);
           tripsAPI.checkLogin(loginResponse);
+        } else {
+          tripsAPI.getTrips(
+            stations.list[stations.startIndex].stationId,
+            stations.list[stations.endIndex  ].stationId,
+            searchOptions,
+            user,
+            processTrips
+          );
+          setQueryWait({queryWait: true, waitTimer: 0});
         }
       },
-      // no monitoring  
-      []
+      // look for change in search options   
+      [searchOptions]
     );      
 
     function setStationsList(stationArr) {
@@ -156,6 +175,7 @@ export default {
         stationArr[stations.startIndex].stationId,
         stationArr[stations.endIndex  ].stationId,
         searchOptions,
+        user,
         processTrips
       );
       setQueryWait({queryWait: true, waitTimer: 0});
@@ -206,7 +226,7 @@ export default {
         let closestStation = geoMath.findClosestStation(loc,stations.list);
         let startId = stations.list[closestStation.minIndex].stationId;
         let endId = stations.list[stations.endIndex].stationId;
-        tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
+        tripsAPI.getTrips(startId,endId,searchOptions,user,processTrips);
         setQueryWait({queryWait: true, waitTimer: 0});
         setStations({
           ...stations,
@@ -231,7 +251,7 @@ export default {
 
         let closestStation = geoMath.findClosestStation({lat : lat, lon: lng}, stations.list);
 
-        if (searchOptions.chooseStart) {
+        if (mapOptions.chooseStart) {
           start   = closestStation.minIndex;
           end     = stations.endIndex;
           slat    = lat;
@@ -247,7 +267,7 @@ export default {
         let startId = stations.list[start].stationId;
         let endId   = stations.list[end].stationId;
         setQueryWait({queryWait: true, waitTimer: 0});
-        tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
+        tripsAPI.getTrips(startId,endId,searchOptions,user,processTrips);
         setStations({
           ...stations,
           location       : {lat : slat, lon : slon},
@@ -262,7 +282,6 @@ export default {
     // these functions are kept separate so they cleanly match 
     // the database responses.
     function processTrips(trips) {
-
       if (!trips.length) {
         setStatsAndCharts({
           ...statsAndCharts,
@@ -292,9 +311,9 @@ export default {
       event.preventDefault();
       switch (event.target.name) {
         case 'chooseStart': 
-          setSearchOptions({
-            ...searchOptions,
-            chooseStart : searchOptions.chooseStart? false : true
+          setMapOptions({
+            ...mapOptions,
+            chooseStart : mapOptions.chooseStart? false : true
           });
           break;
         case 'useTime': 
@@ -494,13 +513,14 @@ export default {
                 />)
               :
                 (<SearchForm
-                  timeAndDate  ={timeAndDate}
-                  stations     ={stations}
-                  options      ={searchOptions}
-                  user         ={user}
-                  dbOkay       ={dbOkay}
-                  whereAmI     ={whereAmI}
-                  handleToggle ={handleToggle}
+                  timeAndDate   ={timeAndDate}
+                  stations      ={stations}
+                  mapOptions    ={mapOptions}
+                  searchOptions ={searchOptions}
+                  user          ={user}
+                  dbOkay        ={dbOkay}
+                  whereAmI      ={whereAmI}
+                  handleToggle  ={handleToggle}
                 />)}
             </div>
             {/* 1a0 - second row - TripsChart */}
