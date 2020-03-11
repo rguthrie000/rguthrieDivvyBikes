@@ -16,7 +16,6 @@
 
 //* Dependencies ***************************************
 const db         = require("../models/index");
-const passport   = require("../config/passport");
 const debug      = require("../debug");
 const {dbReady}  = require('../config/checkModel.js');
 require("dotenv").config();
@@ -28,75 +27,136 @@ module.exports = function(app) {
 
   //* Authentication ***********************************
 
-  // Using the passport.authenticate middleware with our local strategy.
-  // If the user has valid login credentials, send them to the members page.
-  // Otherwise the user will be sent an error
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    if (debug) {console.log(`Login request: ${req.body.userName} ${req.body.password}`)}
+  app.get("/api/checkUser", (req,res) => {
+    if (debug) {console.log(`check user requested`)}
     if (req.user) {
-      currentUserName = req.user;
+      currentUserName = req.user.userName;
+      db.Users.findOne({userName : currentUserName}).exec( (err,data) => {
+        res.send({
+          result     : 'loggedIn',
+          userName   : currentUserName,
+          genderMale : data.genderMale,
+          birthYear  : data.birthYear
+        });
+      });
+    } else {
+      res.send({
+        result     : 'no user',
+        userName   : '',
+        genderMale : '',
+        birthYear  : ''
+      });
     }
-    res.json(req.user);
+  });
+  
+  // Using the passport.authenticate middleware with our local strategy.
+  app.post("/api/login", (req, res) => {
+    let respObj = {};
+    db.Users.findOne({userName : req.body.userName}).exec( (err, data) => {
+      if (!data) {
+        respObj = {
+          result     : 'not found',
+          userName   : '',
+          genderMale : '',
+          birthYear  : ''
+        };
+      } else {
+        if (data.password !== req.body.password) {
+          respObj = {
+            result     : 'incorrect password',
+            userName   : '',
+            genderMale : '',
+            birthYear  : ''
+          };
+        } else {
+          currentUserName = req.body.userName;
+          respObj = {
+            result     : 'loggedIn',
+            userName   : currentUserName,
+            genderMale : data.genderMale,
+            birthYear  : data.birthYear
+          };
+          if (debug) {console.log(`login: ${respObj.result}, ${respObj.userName}, ${respObj.genderMale}, ${respObj.birthYear}`);}
+        }
+      }
+      res.send(respObj);      
+    });
   });
 
-  // Route for signing up a user. The user's password is hashed and stored securely. 
-  // If the user is created successfully, proceed to the members page,
-  // otherwise return an error.
+  // Route for signing up a user.  
   app.post("/api/signup", (req, res) => {
-    if (debug) {console.log(`Signup request: ${req.body.userName} ${req.body.password}`);}
-    currentUserName = req.body.userName;
+    if (debug) {console.log(`signup requested: ${JSON.stringify(req.body)}`);}
+    let respObj = {};
     db.Users.create({
       userName   : req.body.userName,
       password   : req.body.password,
-      genderMale : req.body.genderMale,
+      genderMale : (req.body.genderMale ? 1 : 0),
       birthYear  : req.body.birthYear
     })
-    .then((rowsAffected) => {
+    .then( (result) => {
       // rowsAffected is an array whose first element is the number of rows affected.
       // here we expect either creation of one row, or zero rows if the userName
       // is not unique. 
-      if (rowsAffected[0] == 0) {
-        currentUserName = '';
-        res.status(409);                      //  409 - Conflict
-      } else {
-        passport.authenticate("local");       // successful signup is also a successful login
-        res.json(currentUserName);            // reply with userName
+      console.log('insert: ',result);
+      currentUserName = req.body.userName;
+      if (!result) {
+        respObj = {
+          result     : 'already signed up',
+          userName   : currentUserName,
+          genderMale : req.body.genderMale,
+          birthYear  : req.body.birthYear
+        }
+      } else {  
+        respObj = {
+          result     : 'loggedIn',
+          userName   : currentUserName,
+          genderMale : req.body.genderMale,
+          birthYear  : req.body.birthYear
+        };
       }
+      res.send(respObj);           
     })
-    .catch(function(err) {
-      res.status(409).json(err);
+    .catch( (err) => {
+      console.log('err: ',err);
+      respObj = {
+        result     : 'db create failed',
+        userName   : '',
+        genderMale : '',
+        birthYear  : ''
+      }
+      res.send(respObj);           
     });
   });
 
   // Route for logging user out
-  app.get("/logout", function(req, res) {
+  app.get("/api/logout", function(req, res) {
+    if (debug) {console.log(`logout requested`);}  
     currentUserName = '';
-    req.logout();
-    res.status(200);                          // 200 - ok
+    // if (req.user) {req.logout();}
+    res.send('logged out');
   });
 
   // Delete User
-  app.get("/api/userdelete/:username", (req,res) => {
-    if (debug) {console.log(`Request to delete user ${req.params.username}`);}  
+  app.get("/api/userdelete/:userName", (req,res) => {
+    let user = req.params.userName;
     db.Users.
-      deleteOne({userName : req.params.userName}).
+      deleteOne({userName : user}).
       exec( (err, data) => {
         if (err) {
+          if (debug) {console.log(`delete user requested: ${user}`);}  
           if (debug) {console.log(err);}
-          res.status(401);
+          res.send('delete failed');
         } else {
-          res.status(200);
-          req.logout();
+          if (data.n === 1 && data.ok === 1 && data.deletedCount === 1) {
+            if (debug) {console.log(`delete requested: ${user} DELETED`);}  
+            res.send('deleted');
+          } else {
+            if (debug) {console.log(`delete requested: ${user} failed - ${JSON.stringify(data)}`)}
+            res.send('delete failed');
+          }
         }
     });
   });
-
-// Change password
-  //app.put("/password", (req,res) => {
-  //  if (currentUserName) {
-  //    db.Users.updateOne()
-  //  }
-  //})
 
   //* api routes ***********************************
 
@@ -106,8 +166,9 @@ module.exports = function(app) {
   });
 
   app.get("/api/dbready", (req,res) => {
+    let dbReadyState = dbReady();
     if (debug) {console.log('dbReady requested');}
-    res.send(dbReady());
+    res.send(dbReadyState);
   });
 
   app.get("/api/stations", (req,res) => {
@@ -158,6 +219,7 @@ module.exports = function(app) {
     //   let bYrHi   = req.body.birthYear + req.body.ageTol;
     //   queryObj.birthYear = { $gte:   bYrLo, $lte:   bYrHi };
     // }
+    if (debug) {console.log(`trips requested, ${JSON.stringify(queryObj)}`);}
     db.Trips.find(queryObj).
     select({ startTime: 1, tripDuration: 1 }).
     exec( (err, dataArr) => {

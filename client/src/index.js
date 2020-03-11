@@ -1,3 +1,4 @@
+// c
 import tripsAPI              from "./utils/tripsAPI";
 import React                 from "react";
 import ReactDOM              from "react-dom";

@@ -121,7 +121,6 @@ label {
   left: 30px;
   width: 40px;
   height: 30px;
-  z-index:5;
 }
 
 #start-station {
@@ -129,7 +128,6 @@ label {
   left: 70px;
   width: 305px;
   height: 30px;
-  z-index:2;
 }
 
 #start-station-id-label {
@@ -143,7 +141,6 @@ label {
   left: 30px;
   width: 40px;
   height: 30px;
-  z-index: 50;
 }
 
 #end-station {
@@ -151,7 +148,6 @@ label {
   left: 70px;
   width: 305px;
   height: 30px;
-  z-index:2;
 }
 
 #end-station-id-label {
@@ -191,4 +187,9 @@ button {
   font-size: 12pt;
   font-weight: 600;
 }
-
+#toggle-box-time:hover,
+#toggle-box-profile:hover,
+#toggle-box-location:hover {
+  height: 105px;
+  width: 115px;
+}

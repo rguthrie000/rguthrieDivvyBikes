@@ -22,8 +22,6 @@ const debug = require("./debug");
 // Requiring necessary npm packages
 const path         = require('path');
 const express      = require('express');
-const session      = require('express-session');
-const passport     = require('./config/passport.js');
 const {checkModel} = require('./config/checkModel.js');
 require("dotenv").config();
 
@@ -35,24 +33,14 @@ require("dotenv").config();
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 // When deployed, identify home for client assets
 // (during development, server and client are on the
 // same machine; the react client app will load the
 // client side)
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static("./client/build"));
-}
 // Session specification - session is established on valid login
-app.use(
-  session({
-    secret: process.env.passwordKeyPhrase,
-    resave: true,
-    saveUninitialized: true
-  })
-);
-app.use(passport.initialize());
-app.use(passport.session());
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, './client/build')));
+};
 
 // API routes
 require("./routes/api-routes.js")(app);

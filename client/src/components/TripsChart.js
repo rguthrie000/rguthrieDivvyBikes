@@ -1,4 +1,5 @@
 import React from "react";
+import timeSvcs from "../utils/timeSvcs"
 import { 
     VictoryBar, VictoryChart, VictoryAxis, VictoryTheme 
   } from "victory";
@@ -12,20 +13,20 @@ export default function TripsChart(props) {
 
   return (
     <>
-      {props.querying?
+      {props.query.queryWait?
       (
-        <div id="waitMsg">Waiting for results: {props.waitTime}</div>
+        <div id="waitMsg">Waiting for results: {timeSvcs.makeMinutesAndSeconds(props.query.waitTimer)}</div>
       ) :
       (
         <div className="chart-summary">
-          Most Ride Times: <span id="average">{props.modeDuration}{props.nextBin? ` - ${props.nextBin}`: ''}</span>
+          Most Ride Times: <span id="average">{props.plot.modeDuration}{props.plot.nextBin? ` - ${props.plot.nextBin}`: ''}</span>
           <div id="canvas" style={chartStyle}>
             <VictoryChart 
               domainPadding={10} 
               theme={VictoryTheme.material} 
             >
               <VictoryAxis
-                tickValues={props.labels}
+                tickValues={props.plot.labels}
               />
               <VictoryAxis
                 dependentAxis
@@ -34,14 +35,15 @@ export default function TripsChart(props) {
               <VictoryBar 
                 alignment={"start"}
                 barRatio = {1.25}
-                data={props.binTrips}
+                data={props.plot.binTrips}
                 x={"bin"}
                 y={"trips"}
               />
             </VictoryChart>
           </div>
           <div className="chart-detail">
-            <p id="std-dev">trips: {props.trips ? props.trips:'-'}, standard deviation: {props.stdDevDuration ? props.stdDevDuration:'-'}</p>
+            <p id="std-dev">trips: {props.plot.trips ? props.plot.trips:'-'},
+              standard deviation: {props.plot.stdDevDuration ? props.plot.stdDevDuration:'-'}</p>
           </div>
         </div>
       )}

@@ -2,15 +2,7 @@ import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import "./MapCard.css";
 
-export default function MapCard({
-    centerSkew,
-    centerLat,
-    centerLon,
-    stations,
-    startStation,
-    endStation,
-    mapClick
-  }) {
+export default function MapCard({geoKey, stations, mapClick}) {
   
   const defaultProps = { center: {lat: 41.9, lng: -87.65}, zoom: 11 };
 
@@ -34,16 +26,18 @@ export default function MapCard({
     </div>
   );
 
+  const stationList = () => {return(stations.populated? stations.list : []);}
+
   return( 
     <div id="map" className="card mapcard">
       <GoogleMapReact
         onClick={mapClick}
-        bootstrapURLKeys={centerSkew}
+        bootstrapURLKeys={{key: geoKey}}
         defaultCenter={defaultProps.center}
         defaultZoom={defaultProps.zoom}
         yesIWantToUseGoogleMapApiInternals={true}
       >
-        {stations.map((s,i) => (
+        {stationList().map((s,i) => (
           <Station key={i} 
             lat={s.stationLat} 
             lng={s.stationLon} 
@@ -52,8 +46,8 @@ export default function MapCard({
           />
         ))}
         <Station 
-          lat={centerLat} 
-          lng={centerLon} 
+          lat={stations.location.lat} 
+          lng={stations.location.lon} 
           text={'loc'} 
           height={'40px'}
           width={'60px'}
@@ -61,8 +55,8 @@ export default function MapCard({
           bkgnd={'magenta'}
         />
         <Station 
-          lat={startStation.stationLat}
-          lng={startStation.stationLon}
+          lat={(stations.populated? stations.list[stations.startIndex] : {}).stationLat}
+          lng={(stations.populated? stations.list[stations.startIndex] : {}).stationLon}
           text={'start'} 
           textColor='green'
           height={'40px'}
@@ -71,8 +65,8 @@ export default function MapCard({
           bkgnd={'white'}
         />
         <Station
-          lat={endStation.stationLat}
-          lng={endStation.stationLon} 
+          lat={(stations.populated? stations.list[stations.endIndex  ] : {}).stationLat}
+          lng={(stations.populated? stations.list[stations.endIndex  ] : {}).stationLon} 
           text={'dest'}
           height={'40px'}
           width={'60px'}

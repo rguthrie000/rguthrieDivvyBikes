@@ -13,10 +13,6 @@ const divvyBox = {
 
 export default {
     
-  randLat     : () => (divvyBox.latLo + Math.random()*(divvyBox.latHi - divvyBox.latLo)),
-
-  randLon     : () => (divvyBox.lonLo + Math.random()*(divvyBox.lonHi - divvyBox.lonLo)),
-
   randLoc     : () => {
     let lat = divvyBox.latLo + Math.random()*(divvyBox.latHi - divvyBox.latLo);
     let slope = (divvyBox.lkShoreNlon - divvyBox.lkShoreSlon)/(divvyBox.lkShoreNlat-divvyBox.lkShoreSlat);
@@ -27,8 +23,8 @@ export default {
 
   divvyLimits : () => divvyBox,
 
-  findClosestStation : (lat,lon,list) => {
-    let dArr = list.map((s) => ((s.stationLat-lat)**2+(s.stationLon-lon)**2));
+  findClosestStation : (location,list) => {
+    let dArr = list.map((s) => ((s.stationLat-location.lat)**2+(s.stationLon-location.lon)**2));
     let min = 1e6;
     let minIndex = -1;
     for (let i = 0; i < dArr.length; i++) {

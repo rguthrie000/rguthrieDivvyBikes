@@ -1,65 +1,116 @@
-import React, {useState, useEffect} from "react";
-import tripsAPI                     from "./utils/tripsAPI";
-import geoMath                      from "./utils/geoMath";
-import SearchForm                   from "./components/SearchForm";
-import MapCard                      from "./components/MapCard";
-import TripsChart                   from "./components/TripsChart";
-import {getTimeStr,getTimeFlags}    from "./utils/timeSvcs";
-import {debug}                      from "./debug"
+import React, {useState} from "react";
+import tripsAPI          from "./utils/tripsAPI";
+import geoMath           from "./utils/geoMath";
+import SearchForm        from "./components/SearchForm";
+import MapCard           from "./components/MapCard";
+import TripsChart        from "./components/TripsChart";
+import timeSvcs          from "./utils/timeSvcs";
+import tripsAnalysis     from "./utils/tripsAnalysis";
+import {debug}           from "./debug"
 import "./App.css";
+import LogInSignUp from "./components/LogInSignUp";
 
 
-let queryWait = false;
-let waitTimer = 0;
+//*********************************
+//*   Globals (full-file scope)   *
+//*********************************
+
+// Storage for Google Maps API key (provided by our server)
+// This value must be in scope prior to React's use of the App
+// function.
 let geoKey = '';
+
+// State and counter to show waiting status during db queries...
+// these just don't work when declared as properties of a react 
+// state object. See Query Status methods below. 
+let queryObj = {
+  queryWait : false,
+  waitTimer : 0
+};
+
+//**************
+//*   Module   *
+//**************
 
 export default {
 
+  // method used to register the Google Maps API key
   postKey : (key) => {geoKey = key;},
     
+  // body of index.HTML, with logic and state.  
   App : () => {
 
-    //******************
-    //*   State Data   *
-    //******************
+    //*****************************
+    //*   State Data and Methods  *
+    //*****************************
     
-    const [searchOptions,setSearchOptions] = useState({
-        chooseStart  : true,
-        useTime      : false,
-        useProfile   : false
+    // Query status method -- see Globals, above.
+    // React does not properly monitor changes when working
+    // with this declaration from the timer interrupt context:
+    // const [queryWait,setQueryWait] = useState({
+    //   queryWaiting : false,
+    //   waitTimer    : 0
+    // })
+    // So instead we work with the module-scoped variables
+    // defined above and this method:
+    const setQueryWait = (stateObj) => {
+      queryObj = {
+        queryWait : stateObj.queryWait,
+        waitTimer : stateObj.waitTimer
+      }
+    }
+
+    const [user,setUser] = useState({
+      userName  : '',
+      password  : '',
+      gender    : '',
+      birthYear : '',
+      lastTry   : '',
+      showLogin : false
     });
 
-    // Station list. A station:
+    // user options
+    const [searchOptions,setSearchOptions] = useState({
+      chooseStart : true,
+      useTime     : false,
+      useProfile  : false
+    });
+
+    // stations is the set of variables used for the main elements used in the Map and for searching.
+    // the 'list' array holds objects from the Stations collection. A station in the Stations collection is:
     // {
     //   stationId   : < one of 611 numbers in 2..673 (not all values are used) >
     //   stationName : < string, descriptive of station location, e.g. an intersection or landmark>
     //   docks       : < bikes capacity >
-    //   stationLat  : < latitude, a real number in 41.736646 - 42.064854, numbers are larger going North>
-    //   stationLon  : < longitude, a real number in -87.774704 - -87.54938625, numbers are more negative going West>
+    //   stationLat  : < latitude in degrees, a real number in 41.736646 - 42.064854, 
+    //                   numbers are larger going North>
+    //   stationLon  : < longitude in degrees, a real number in -87.774704 - -87.54938625,
+    //                   numbers are more negative going West>
     // }   
+    // 
     const [stations,setStations] = useState({
       populated      : false,
-      startIndex     : 564,
-      endIndex       : 72,  // Station 43, Michigan Ave & Washington St (train station 'Millennium')
-      list           : [],
-      latitude       : geoMath.randLat(),
-      longitude      : geoMath.randLoc().lon,
+      startIndex     : 423,  // Station 91, Clinton St & Washington Blvd
+      endIndex       :  72,  // Station 43, Michigan Ave & Washington St (train station 'Millennium')
+      list           :  [],
+      location       : {lat: 41.884550, lon: -87.639971}, 
       minStationDist : 0.0
     });
 
+    // time variables; the flags allow refinement of searching/charting, though
+    // presently only 'isWeekday' is used.
     const [timeAndDate,setTimeAndDate] = useState({
       timeStr     : '',
-      isWeekday   : 0,
-      isOvernight : 0,
-      isMorning   : 0,
-      isAfternoon : 0,
-      isEvening   : 0
+      isWeekday   :  0,
+      isOvernight :  0,
+      isMorning   :  0,
+      isAfternoon :  0,
+      isEvening   :  0
     });
 
+    // variables for use in data analysis and charting.
     const [statsAndCharts,setStatsAndCharts] = useState({
-      minDuration    : '',
-      maxDuration    : '',
-      trips          : '',
+      trips          :  0,
       modeDuration   : '',
       nextBin        : '',
       stdDevDuration : '',
@@ -67,41 +118,25 @@ export default {
       binTrips       : []
     });
 
-    // state hook not working from interrupt context;
-    // tried to use this:
-    // const [queryWait,setQueryWait] = useState({
-    //   queryWaiting : false,
-    //   waitTimer    : 0
-    // })
-    // but instead have to use this (global variables defined above)
-
-    const setQueryWait = (waiting, action) => {
-      queryWait = waiting;
-      switch (action) {
-        case 'running' : waitTimer++;   break;
-        case 'reset'   :
-        default        : waitTimer = 0; break;
-      }
-      return(waitTimer);
-    }
-    const getQueryWait = () => queryWait;
-
+    // dbReady states and state variable
     const DB_BAD             = 0;
     const DB_GOOD            = 1;
     const DB_UNKNOWN         = 2;
     const DB_TRIPSLOADING    = 3;
     const [dbOkay,setDbOkay] = useState();
 
-  //******************
-  //*   Functions    *
-  //******************
+    //******************
+    //*   Functions    *
+    //******************
+    
     // When ready...
-    useEffect( () => {
+    React.useEffect( () => {
         if (!stations.list.length) {
           setInterval(clock,1000);
           setDbOkay(DB_UNKNOWN);
           tripsAPI.getDBready(dbReadyResponse);
           tripsAPI.getStations(setStationsList);
+          tripsAPI.checkLogin(loginResponse);
         }
       },
       // no monitoring  
@@ -109,8 +144,7 @@ export default {
     );      
 
     function setStationsList(stationArr) {
-      tripsAPI.getDBready(dbReadyResponse);
-      let closestStation = geoMath.findClosestStation(stations.latitude,stations.longitude,stationArr);
+      let closestStation = geoMath.findClosestStation(stations.location,stationArr);
       setStations({
         ...stations,
         populated      : true, 
@@ -118,13 +152,20 @@ export default {
         minStationDist : closestStation.minDist,
         startIndex     : closestStation.minIndex
       });
+      tripsAPI.getTrips(
+        stationArr[stations.startIndex].stationId,
+        stationArr[stations.endIndex  ].stationId,
+        searchOptions,
+        processTrips
+      );
+      setQueryWait({queryWait: true, waitTimer: 0});
     }
 
     function dbReadyResponse(r) {
-      if (debug) {console.log(JSON.stringify(r));}
       if (r.UsersCollection && r.StationsCollection && r.TripsCollection) {
         setDbOkay(DB_GOOD);
       } else {
+        if (debug) {console.log(JSON.stringify(r));}
         // not all good, no hope if either Users or Stations is false
         if (!r.UsersCollection || !r.StationsCollection) {
           setDbOkay(DB_BAD);
@@ -140,46 +181,55 @@ export default {
       }
     }  
 
+    function clock() { 
+      if (queryObj.queryWait) {
+        setQueryWait({queryWait : true, waitTimer : queryObj.waitTimer + 1});
+      };
+      let tStr = timeSvcs.getTimeStr();
+      let flagsObj = timeSvcs.getTimeFlags(tStr);
+      setTimeAndDate({
+        timeStr     : tStr,
+        isWeekday   : flagsObj.isWeekday,
+        isOvernight : flagsObj.isOvernight,
+        isMorning   : flagsObj.isMorning,
+        isAfternoon : flagsObj.isAfternoon,
+        isEvening   : flagsObj.isEvening
+      });
+    }
+
     function whereAmI(event) {
       event.preventDefault();
-      if (dbOkay === DB_UNKNOWN) {
+      if (dbOkay !== DB_GOOD) {
         tripsAPI.getDBready(dbReadyResponse);
-      }  
-      if (dbOkay === DB_GOOD) {
+      } else { 
         let loc = geoMath.randLoc();
-        let lat = loc.lat;
-        let lng = loc.lon;
-        let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
+        let closestStation = geoMath.findClosestStation(loc,stations.list);
         let startId = stations.list[closestStation.minIndex].stationId;
         let endId = stations.list[stations.endIndex].stationId;
         tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
-        console.log('setting queryWait');
-        setQueryWait(true,'reset');
+        setQueryWait({queryWait: true, waitTimer: 0});
         setStations({
           ...stations,
-          latitude       : lat,
-          longitude      : lng,
+          location       : {lat : loc.lat, lon : loc.lon},
           minStationDist : closestStation.minDist,
           startIndex     : closestStation.minIndex
         }); 
-        if (debug) {console.log(`random start: lat ${lat}, lon ${lng}; startStation ${startId}, endStation ${endId}`);}
+        if (debug) {console.log(`random start: lat ${loc.lat}, lon ${loc.lon}; startStation ${startId}, endStation ${endId}`);}
       }  
     }
 
     function mapClick({x, y, lat, lng}) {
 
-      if (dbOkay === DB_UNKNOWN) {
+      if (dbOkay !== DB_GOOD) {
         tripsAPI.getDBready(dbReadyResponse);
-      }  
-      if (dbOkay === DB_GOOD) {
-        console.log('setting queryWait');
+      } else { 
         let start   = 0;
         let end     = 0;
         let slat    = 0;
         let slon    = 0;
         let minDist = 0;
 
-        let closestStation = geoMath.findClosestStation(lat,lng,stations.list);
+        let closestStation = geoMath.findClosestStation({lat : lat, lon: lng}, stations.list);
 
         if (searchOptions.chooseStart) {
           start   = closestStation.minIndex;
@@ -190,18 +240,17 @@ export default {
         } else {
           start   = stations.startIndex;
           end     = closestStation.minIndex;
-          slat    = stations.latitude;
-          slon    = stations.longitude;
+          slat    = stations.location.lat;
+          slon    = stations.location.lon;
           minDist = stations.minStationDist;
         }
         let startId = stations.list[start].stationId;
         let endId   = stations.list[end].stationId;
-        setQueryWait(true,'reset');
+        setQueryWait({queryWait: true, waitTimer: 0});
         tripsAPI.getTrips(startId,endId,searchOptions,processTrips);
         setStations({
           ...stations,
-          latitude       : slat,
-          longitude      : slon,
+          location       : {lat : slat, lon : slon},
           minStationDist : minDist,
           startIndex     : start,
           endIndex       : end
@@ -214,90 +263,29 @@ export default {
     // the database responses.
     function processTrips(trips) {
 
-      const CHART_BINS = 7; // odd number to split at the mean
-
-      let count = trips.length;
-      let labels = [];
-      let binTrips = [];
-      let mean = 0;
-      let stdDev = 0;
-      let baseDuration = 0;
-      let durationStep = 0;
-      let maxBinCt = 0;
-      let maxIndex = 0;
-
-      if (!count) {
+      if (!trips.length) {
         setStatsAndCharts({
-          minDuration    : 0,
-          maxDuration    : 0,
+          ...statsAndCharts,
+          trips          :  0,
           modeDuration   : '(no trips)',
           nextBin        : '',
           stdDevDuration : '--:--',
+          labels         : [],
           binTrips       : []
         });
       } else {  
-        if (debug) {console.log(`processing ${count} trips`);}
-        // sorting will help with rejection of outliers later
-        trips.sort( (a,b) => a.tripDuration - b.tripDuration);
-        mean   = trips.reduce((acc,t) => acc + t.tripDuration, 0) / count;
-        stdDev = Math.sqrt(trips.reduce(
-          (acc,t) => acc + (t.tripDuration-mean)**2, 0) / (count > 1 ? count-1 : 1));
-
-        if (count > 30) {
-          trips  = trips.filter( (t) => Math.abs(t.tripDuration-mean) <= 3.0*stdDev);
-          count  = trips.length;
-          mean   = trips.reduce((acc,t) => acc + t.tripDuration, 0) / count;
-          stdDev = Math.sqrt(trips.reduce(
-            (acc,t) => acc + (t.tripDuration-mean)**2, 0) / (count > 1 ? count-1 : 1));
-        }
-
-        if (debug) {console.log(`trips ${count}: mean ${mean}, standard deviation ${stdDev}`);}
-        if (count === 1) {
-          baseDuration = trips[0].tripDuration;
-          maxBinCt = 0;
-          maxIndex = 0;
-          labels.push(makeMinutesAndSeconds(baseDuration));
-          binTrips.push({ 
-            bin  : 1, 
-            trips: 1
-          });
-          durationStep = 0;
-        } else {
-          baseDuration = mean - ((CHART_BINS-1)/4-0.25)*stdDev;
-          durationStep = 0.5*stdDev;
-          let t = 0;
-          for (let b = 0; b < CHART_BINS; b++) {
-            labels[b] = makeMinutesAndSeconds(baseDuration+b*durationStep)
-            let countInBin = 0;
-            while ((t < count) && (trips[t].tripDuration < (baseDuration + (b+1)*durationStep))) {
-              countInBin++;
-              t++;
-            }
-            if (countInBin > maxBinCt) {
-              maxBinCt = countInBin;
-              maxIndex = b;
-            }
-            binTrips.push({ 
-              bin  : b+1, 
-              trips: countInBin
-            });
-          }
-        }  
-      }
-      if (count) {
-        console.log(`${JSON.stringify(binTrips)}`,labels);
+        let resultsObj = tripsAnalysis.tripsByDuration(trips);
         setStatsAndCharts({
-          minDuration     : trips[0].tripDuration,
-          maxDuration     : trips[count-1].tripDuration,
-          trips           : count,
-          modeDuration    : makeMinutesAndSeconds(baseDuration+maxIndex*durationStep), 
-          nextBin         : makeMinutesAndSeconds(baseDuration+(maxIndex+1)*durationStep),
-          stdDevDuration  : makeMinutesAndSeconds(stdDev),
-          labels          : labels,
-          binTrips        : binTrips
+          ...statsAndCharts,
+          trips           : resultsObj.trips,
+          modeDuration    : resultsObj.modeDuration, 
+          nextBin         : resultsObj.nextBin,
+          stdDevDuration  : resultsObj.stdDevDuration,
+          labels          : resultsObj.labels,
+          binTrips        : resultsObj.binTrips
         });
       }
-      setQueryWait(false,'reset');
+      setQueryWait({queryWait: false, waitTimer: 0});
     }
 
     function handleToggle(event) {
@@ -316,109 +304,224 @@ export default {
           });
           break;
         case 'useProfile': 
-          setSearchOptions({
-            ...searchOptions,
-            useProfile : searchOptions.useProfile ? false : true
-          });
+          if (user.userName) {
+            setSearchOptions({
+              ...searchOptions,
+              useProfile : searchOptions.useProfile ? false : true
+            });
+          } else {
+            setUser({
+              ...user,
+              showLogin : true
+            });  
+          }
           break;
         default: break;
       }
     };
 
-    function makeMinutesAndSeconds(seconds) {
-      let sec = Math.floor(seconds % 60);
-      let min = Math.floor(seconds / 60);
-      sec = sec < 10? '0'+sec : sec;
-      return(min+':'+sec);
+    function loggedOut(msg) {
+      if (debug) {console.log(`log out ${msg}`);}
+      setUser({
+        userName  : '',
+        password  : '',
+        gender    : '',
+        birthYear : '',
+        lastTry   : '',
+        showLogin : false
+      })
     }
 
-    function clock() { 
-      if (getQueryWait()) {
-        setQueryWait(true,'running');
-      };
-      let tStr = getTimeStr();
-      let flagsObj = getTimeFlags(tStr);
-      setTimeAndDate({
-        timeStr     : tStr,
-        isWeekday   : flagsObj.isWeekday,
-        isOvernight : flagsObj.isOvernight,
-        isMorning   : flagsObj.isMorning,
-        isAfternoon : flagsObj.isAfternoon,
-        isEvening   : flagsObj.isEvening
+    function handleDelete() {tripsAPI.getLogout(deleteUser);}
+      const deleteUser   = (msg)  => {if (msg  === 'logged out') tripsAPI.getDelete(user.userName,verifyDelete);}
+      const verifyDelete = (data) => {if (data === 'deleted'   ) loggedOut('deleted');}
+
+    function handleLogBtn() {
+      if (user.userName) {
+        tripsAPI.getLogout(loggedOut);
+      } else {
+        setUser({
+          ...user,
+          showLogin : true
+        })
+      }
+    }
+
+    // handleFormChange() updates the user login / signup fields
+    // in the form fields. react renders them as they are changed.
+    function handleFormChange(event) {
+      event.preventDefault();
+      // Get the value and name of the input which triggered the change
+      const name  = event.target.name;
+      const value = event.target.value;
+      // And update the state so the user can see feedback as the input is typed.
+      setUser({
+        ...user, [name] : value
       });
+    };
+
+    function handleFormDismiss(event) {
+      event.preventDefault();
+      setUser({
+        userName  : '',
+        password  : '',
+        gender    : '',
+        birthYear : '',
+        lastTry   : '',
+        showLogin : false
+      });
+    }
+    
+    const TRY_LOGIN = 0;
+    const TRY_SIGNUP = 1;
+    let formState = TRY_LOGIN;
+
+    function loginResponse(respObj) {
+      console.log('loginResponse: ',JSON.stringify(respObj));
+      if (respObj.result === 'loggedIn') {
+        formState = TRY_LOGIN;
+        setUser({
+          ...user,
+          userName  : respObj.userName,
+          gender    : respObj.genderMale ? 'male' : 'not male',
+          birthYear : respObj.birthYear,
+          showLogin : false
+        });
+      } else {
+        if (formState === TRY_SIGNUP && respObj.result === 'not found') {
+          console.log(`handleFormSubmit (entry), TRY_SIGNUP: `,JSON.stringify(user));        
+          formState = TRY_LOGIN;
+          if (user.userName && user.password.length > 7 && user.gender && user.birthYear) {
+            let genderStr = user.gender.toLowerCase();
+            let genderMale = (genderStr === 'male' || genderStr === 'm');
+            if (user.birthYear < 1920 || user.birthYear > 2017) {
+              setUser({
+                ...user,
+                lastTry   : 'invalid profile'
+              })
+            } else {
+              let userObj = {
+                userName   : user.userName,
+                password   : user.password,
+                genderMale : genderMale,
+                birthYear  : user.birthYear
+              };
+              console.log(`handleFormSubmit, TRY_SIGNUP: `,JSON.stringify(userObj));        
+              tripsAPI.postSignup(userObj,loginResponse);
+            }  
+          }  
+        } else {
+          setUser({
+            ...user,
+            userName  : '',
+            password  : '',
+            gender    : '',
+            birthYear : '',
+            lastTry   : respObj.result
+          });
+        }
+      }
+    }
+
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      // the form is only available when no one's logged in. 
+      // first, try login using username and password 
+      if (user.userName && user.password.length > 7) {
+        formState = TRY_SIGNUP;
+        let userObj = {
+          userName   : user.userName,
+          password   : user.password,
+          genderMale : '',
+          birthYear  : ''
+        };
+        console.log(`handleFormSubmit, TRY_LOGIN: `,JSON.stringify(userObj));   
+        tripsAPI.postLogin(userObj,loginResponse);
+      }
     }
 
     return (
+      // Page layout (bootstrap grid):
+      //   container AppBar
+      //     0. top row - AppBar-header
+      //     1. bottom row - two columns
+      //         1a - first column - two rows
+      //             1a0 - first row:  SearchForm or LogInSignUp
+      //             1a1 - second row: TripsChart
+      //         1b - second column (no rows): MapCard
+      //
       <div className="container AppBar">
+        {/* 0. top row - AppBar-header */}
         <div className="row AppBar-header">
           <div id="nameBox">
               <h5>rguthrie's</h5>
               <h4>Divvy Bikes Planner</h4>
-
               <div className="smallprint">
                 <br />
                 <p>copyright &#169; rguthrie, 2020</p>
               </div>   
-
+          </div>
+          <p id="user">{user.userName? `Hi, ${user.userName}!`:''}</p>
+          <div className='button-box'>
+            <button 
+              className="btn btn-primary button-login"  
+              onClick={handleLogBtn}
+            >
+              {user.userName? 'Log Out':'Log In'}
+            </button>
+            <button 
+              className="btn btn-primary button-delete" 
+              style={{ display: user.userName ? null : 'none'}}
+              onClick={handleDelete}
+            >
+              Delete
+            </button>
           </div>
           <h1 className="AppBar-title">Bike Chicago!</h1>
         </div>
+        {/* 1. bottom row - two columns */}
         <div className="row">
+          {/* 1a - first column - two rows */}
           <div className="col-sm-4">
+            {/* 1a0 - first row - SearchForm or LogInSignUp*/}
             <div className="row info-card">
-              <SearchForm
-                timeAndDate    ={timeAndDate.timeStr}
-                isWeekday      ={timeAndDate.isWeekday}
-                partOfDay      ={
-                  timeAndDate.isOvernight ? 'overnight' : (
-                    timeAndDate.isMorning ? 'morning': (
-                      timeAndDate.isEvening?'evening':'afternoon'
-                    )
-                  )
-                }
-                lat             ={stations.latitude.toPrecision(8)}
-                lon             ={stations.longitude.toPrecision(8)}
-                startStation    ={stations.populated? stations.list[stations.startIndex].stationId   : ''}
-                startName       ={stations.populated? stations.list[stations.startIndex].stationName : ''}
-                endStation      ={stations.populated? stations.list[stations.endIndex  ].stationId   : ''}
-                endName         ={stations.populated? stations.list[stations.endIndex  ].stationName : ''}
-                minStationDist  ={stations.minStationDist.toPrecision(3)}
-                chooseStart     ={searchOptions.chooseStart}
-                useTime         ={searchOptions.useTime}
-                useProfile      ={searchOptions.useProfile}
-                dbOkay          ={dbOkay}
-                whereAmI        ={whereAmI}
-                handleToggle    ={handleToggle}
-              />
+              {user.showLogin ?
+                (<LogInSignUp
+                  user              ={user}
+                  handleFormChange  ={handleFormChange}
+                  handleFormSubmit  ={handleFormSubmit}
+                  handleFormDismiss ={handleFormDismiss}
+                />)
+              :
+                (<SearchForm
+                  timeAndDate  ={timeAndDate}
+                  stations     ={stations}
+                  options      ={searchOptions}
+                  user         ={user}
+                  dbOkay       ={dbOkay}
+                  whereAmI     ={whereAmI}
+                  handleToggle ={handleToggle}
+                />)}
             </div>
+            {/* 1a0 - second row - TripsChart */}
             <div className="row chart-card">
               <TripsChart
-                querying       ={getQueryWait()}
-                waitTime       ={makeMinutesAndSeconds(waitTimer)}
-                minDuration    ={statsAndCharts.minDuration}
-                maxDuration    ={statsAndCharts.maxDuration}
-                trips          ={statsAndCharts.trips}
-                modeDuration   ={statsAndCharts.modeDuration}
-                nextBin        ={statsAndCharts.nextBin}
-                stdDevDuration ={statsAndCharts.stdDevDuration}
-                labels         ={statsAndCharts.labels}
-                binTrips       ={statsAndCharts.binTrips} 
+                query ={queryObj}
+                plot  ={statsAndCharts}
               />
             </div>
           </div>
+          {/* 1b - second column (no rows): MapCard */}
           <div className="col-sm-8">
               <MapCard 
-                centerSkew   ={{key: geoKey}}
-                centerLat    ={stations.latitude}
-                centerLon    ={stations.longitude}
-                stations     ={stations.populated? stations.list: []}
-                startStation ={stations.populated? stations.list[stations.startIndex] : {}}
-                endStation   ={stations.populated? stations.list[stations.endIndex  ] : {}}
-                mapClick     ={mapClick}
+                geoKey   ={geoKey}
+                stations ={stations}
+                mapClick ={mapClick}
               />
-        </div>
+          </div>
         </div>
       </div>
     )
-  }
-}
+  }  // end App function
+
+}  // end module

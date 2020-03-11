@@ -1,0 +1,63 @@
+.loginsignup {
+  position: relative;
+  height: 320px;
+  width : 365px;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
+  text-align: left;
+  font-size: 16pt;
+  font-weight: 500;
+  border: 1px solid black;
+  border-radius: 2px;
+  box-shadow: 4px 2px gray;
+}
+
+.message-box {
+  margin: 10px 0px 0px 30px;
+  height: 40px;
+  width: 300px;
+  text-align: center;
+  text-shadow: 1px 1px;
+}
+
+.form-input {
+  margin: 0px 0px 0px 30px;
+  width: 300px;
+  text-align: center;
+  border: 1px solid black;
+  border-radius: 2px;
+  box-shadow: 4px 2px gray;
+}
+
+.button-submit,
+.button-dismiss {
+  position: absolute;
+  height: 39px;
+  width: 100px;
+  margin: 10px 0 0 5px;
+  padding: 0px 0px 0px 0px;
+  font-weight: 600;
+  color: white;
+  border: 1px solid black;
+  border-radius: 15px;
+  box-shadow: 2px 2px lightgray;
+}
+.button-submit {
+  top: 260px;
+  left: 50px;
+}
+.button-dismiss {
+  top: 260px;
+  left: 200px;
+}
+.button-submit:hover,
+.button-dismiss:hover {
+    margin: 8px 0 0 0px;
+    width: 110px;
+    height: 40px;
+}
+
+label {
+  font-size: 10pt;
+}
+

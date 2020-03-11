@@ -28,8 +28,54 @@
 }
 
 .smallprint {
+  position : absolute;
+  top: 90px;
+  left: 40px;
   color: yellow;
   font-size: 10px;
+}
+.button-box {
+  position: relative;
+  top: -30px;
+  left: 0px;
+  height : 40px;
+  width  : 200px;
+  justify-content: center;
+  display: inline-flex;
+}
+
+.button-delete,
+.button-login {
+  position : absolute;
+  height: 40px;
+  width: 80px;
+  padding: 0px 0px 0px 0px;
+  font-weight: 600;
+  color: white;
+  border: 1px solid black;
+  border-radius: 15px;
+}
+.button-delete:hover,
+.button-login:hover {
+  width: 90px;
+  height: 40px;
+}
+.button-login {
+  top: 80px;
+  left: 300px;
+}
+.button-delete {
+  top: 80px;
+  left: 390px;
+}
+
+#user {  
+  position : absolute;
+  top: 40px;
+  left: 317px;
+  width: 150px;
+  text-align: center;
+  color: white;
 }
 
 .AppBar-title {
@@ -42,7 +88,7 @@
 
 .info-card {
   height: 320px;
-  width: 105%;
+  width: 365px;
   margin: 10px 0 0 1px;
   border-radius: 5px;
   border: solid 1px black;

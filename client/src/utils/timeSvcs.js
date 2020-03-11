@@ -18,6 +18,13 @@ const DSTfuture = [
 
 module.exports = {
 
+  makeMinutesAndSeconds : (seconds) => {
+    let sec = Math.floor(seconds % 60);
+    let min = Math.floor(seconds / 60);
+    sec = sec < 10? '0'+sec : sec;
+    return(min + ':' + sec);
+  },
+
   getTimeStr : () => {
   let t = Date.now();
   if (t < DSTfuture[0]) {t -= 6*60*60000;} else

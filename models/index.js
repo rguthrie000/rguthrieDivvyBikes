@@ -35,6 +35,30 @@ const db = mongoose.connection;
 // Bind connection to error event (to get notification of connection errors)
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
+// Here's code to drop a collection...
+// let dropCollName = 'users';
+// db.once("open", () => {
+//   db.db.listCollections().toArray( (err, names) => {
+//     if (err) {
+//       console.log(err);
+//     } else {
+//       names.forEach( (coll) => {
+//         if (coll.name !== dropCollName) {
+//           console.log(`collection: ${coll.name}`);
+//         } else {
+//           db.db.dropCollection(coll.name, (err, result) => {
+//             if (err) {
+//               console.log(err);
+//             } else {
+//               console.log(`collection: ${coll.name} - DROPPED`);
+//             }
+//           });
+//         }
+//       });
+//     }
+//   });
+// });
+
 //*****************************
 //***   Model Definitions   ***
 //*****************************

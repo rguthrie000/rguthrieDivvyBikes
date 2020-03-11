@@ -1,6 +1,7 @@
 // tripServer.js - client-side interface to our server
 // for retrieval of User info, Stations, and Trips.
 import axios   from "axios";
+// import {debug} from "../debug"
 let tArr = [];
 
 export default  {
@@ -69,6 +70,40 @@ export default  {
         res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
         cb(tArr);
       });
+    });
+  },
+
+  checkLogin: (cb) => {
+    axios.get("/api/checkUser").then ( (res) => {
+      cb(res.data);
+    })
+  },
+
+  postLogin : (userObj,cb) => {
+    let postObj = {
+      userName: userObj.userName,
+      password: userObj.password
+    };
+    axios.post("/api/login",postObj).then( (res) => {
+      cb(res.data);
+    });
+  },
+
+  postSignup : (userObj,cb) => {
+    axios.post("/api/signup",userObj).then( (res) => {
+      cb(res.data);
+    });
+  },
+
+  getLogout : (cb) => {
+    axios.get("/api/logout").then( (res) => {
+      cb(res.data);
+    });
+  },
+
+  getDelete : (userName,cb) => {
+    axios.get(`/api/userdelete/${userName}`).then( (res) => {
+      cb(res.data);
     });
   }
 
