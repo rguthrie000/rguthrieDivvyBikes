@@ -105,11 +105,11 @@
   // for CDT <--> CST transitions.
   function tCSVtoUTC( id, s ) {
     const DSTtransitions = [
-      17855346,  //      trip id < this number --> add 21600 seconds to get GMT
-      21419851,  // else trip id < this number --> add 18000 seconds to get GMT
-      22021259,  // else trip id < this number --> add 21600 seconds to get GMT
-      25615852   // else trip id < this number --> add 18000 seconds to get GMT
-                 // else                       --> add 21600 seconds to get GMT
+      17855346,  //      trip id < this number --> CST (Win 2018    ), add 21600 seconds to get GMT
+      21419851,  // else trip id < this number --> CDT (Spr, Sum '18), add 18000 seconds to get GMT
+      22021259,  // else trip id < this number --> CST (F'18, Win'19), add 21600 seconds to get GMT
+      25615852   // else trip id < this number --> CDT (Spr, Sum '19), add 18000 seconds to get GMT
+                 // else                       --> CST (Fall 2019+  ), add 21600 seconds to get GMT
     ];
     // input format of s is date and time like so: '2020-01-01 14:35'
     // slice & dice, shake & bake...and remember, JS months are offset by 1.

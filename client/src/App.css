@@ -1,6 +1,5 @@
-/* .AppBar {
-  text-align: center;
-} */
+/* App.css - styling for the Divvy Bikes Planner
+*/
 
 .AppBar-header {
   position: relative;
@@ -13,18 +12,18 @@
 }
 
 #nameBox {
-    position: absolute;
-    top: 0px;
-    left: 50px;
-    width: 250px;
-    height: 100px;
-    padding: 15px;
-    margin: 20px 0 0 0;
-    text-align: center;
-    background: yellow;
-    color: black;
-    border-radius: 100px;
-    border: solid 1px black;
+  position: absolute;
+  top: 0px;
+  left: 50px;
+  width: 250px;
+  height: 100px;
+  padding: 15px;
+  margin: 20px 0 0 0;
+  text-align: center;
+  background: yellow;
+  color: black;
+  border-radius: 100px;
+  border: solid 1px black;
 }
 
 .smallprint {
@@ -130,10 +129,6 @@
 
 /* Width at 359px and below */
 @media screen and (max-width: 359px) {
-  body {
-    background-color: #333;
-  }
-
   .container {
     width: 90%;
     padding: 20px;

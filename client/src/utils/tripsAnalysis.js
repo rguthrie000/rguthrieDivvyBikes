@@ -52,7 +52,7 @@ export default {
       durationStep = 0.5*stdDev;
       let t = 0;
       for (let b = 0; b < CHART_BINS; b++) {
-        labels[b] = timeSvcs.makeMinutesAndSeconds(baseDuration+b*durationStep)
+        labels.push(timeSvcs.makeMinutesAndSeconds(baseDuration+b*durationStep));
         let countInBin = 0;
         while ((t < count) && (trips[t].tripDuration < (baseDuration + (b+1)*durationStep))) {
           countInBin++;
@@ -70,17 +70,54 @@ export default {
       if (debug) {console.log(`${JSON.stringify(binTrips)}`,labels);}
     }  
     let returnObj = {
-      trips           : count,
-      modeDuration    : timeSvcs.makeMinutesAndSeconds(baseDuration+maxIndex*durationStep), 
-      nextBin         : timeSvcs.makeMinutesAndSeconds(baseDuration+(maxIndex+1)*durationStep),
-      stdDevDuration  : timeSvcs.makeMinutesAndSeconds(stdDev),
-      labels          : labels,
-      binTrips        : binTrips
+      trips          : count,
+      modeDuration   : timeSvcs.makeMinutesAndSeconds(baseDuration+maxIndex*durationStep), 
+      nextBin        : timeSvcs.makeMinutesAndSeconds(baseDuration+(maxIndex+1)*durationStep),
+      stdDevDuration : timeSvcs.makeMinutesAndSeconds(stdDev),
+      labels         : labels,
+      binTrips       : binTrips
     };
     return(returnObj);
   },
 
-  durationsByHourOfDay : () => {
+  durationsByHourOfDay : (trips) => {
+    let labels = [
+       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9','10','11',
+      '12','13','14','15','16','17','18','19','20','21','22','23'
+    ];
+    let pointsDur = [];
+    let pointsCt = [];
+    let hrArr = [
+      {c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},
+      {c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},
+      {c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0},{c:0,a:0}
+    ];
+    let hr = 0;
+    trips.forEach( (trip) => {
+      hr = timeSvcs.getHourOfDay(trip.startTime);
+      hrArr[hr].c++;
+      hrArr[hr].a += trip.tripDuration;
+    });
+    for (let i = 0; i < 24; i++) {
+      if (hrArr[i].c) {
+        hrArr[i].a = (hrArr[i].a / hrArr[i].c);
+        pointsDur.push({ 
+          x : i, 
+          y : hrArr[i].a
+        });
+      }
+      pointsCt.push({ 
+        x : i, 
+        y : hrArr[i].c
+      });
+      if (debug) {console.log(`durationsByHourOfDay: x ${i}, count ${hrArr[i].c}, avg ${hrArr[i].a}`);}
+    }
+    let returnObj = {
+      labels    : labels,
+      pointsDur : pointsDur,
+      pointsCt  : pointsCt
+    }
+    return(returnObj);
   }
 
 };

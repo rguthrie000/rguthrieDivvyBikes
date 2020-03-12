@@ -1,6 +1,7 @@
 // tripServer.js - client-side interface to our server
 // for retrieval of User info, Stations, and Trips.
-import axios   from "axios";
+import axios    from "axios";
+import timeSvcs from "./timeSvcs";
 // import {debug} from "../debug"
 
 export default  {
@@ -38,27 +39,31 @@ export default  {
   // expected elements in req.body      input arguments
   //   startStation                       startId
   //   endStation                         endId
-  //   useTime                            searchOptions.useTime
   //   useGender, and if 1:               searchOptions.useProfile
   //     genderMale                       user.genderMale
   //   useBirthYear, and if 1:            searchOptions.useProfile
   //     birthYear                        user.birthYear
   //     ageTol                           searchOptions.ageTol
+  //
+  // used to further filter the response:
+  //   useTime                            searchOptions.useTime
+  //     isWeekday                        timeAndDate.isWeekday
+
   getTrips : (startId,endId,searchOptions,user,cb) => {
     let queryObj = {
       startStation : startId,
       endStation   : endId,
-      useGender    : searchOptions.useProfile,
+      useGender    : searchOptions.useGender,
       genderMale   : (user.gender === 'male' ? 1 : 0),
-      useBirthYear : searchOptions.useProfile,
+      useBirthYear : searchOptions.useAge,
       birthYear    : user.birthYear,
       ageTol       : searchOptions.ageTol 
     };
 
     let tArr = [];
 
-    // we want trips from start to dest, and dest to start, 
-    // but not start to start, and not dest to dest.
+    // we want trips from start-to-dest, and dest-to-start, 
+    // but not start-to-start, and not dest-to-dest.
 
     // so begin with start to dest
     axios.post("/api/trips", queryObj).then( (res) => {
@@ -74,9 +79,12 @@ export default  {
       axios.post("/api/trips", queryObj).then( (res) => {
         res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
         // ok, that's the lot...filter for time of week?
-        // if (searchOptions.useTime) {
-        //  
-        // }
+        const ALL_DAYS = 0;
+        // const WEEKDAYS = 1; // these are not explicitly referenced
+        // const WEEKENDS = 2;
+        if (searchOptions.useTime !== ALL_DAYS) {
+          tArr = timeSvcs.filterTimeOfWeek(tArr,searchOptions.useTime);
+        }
         cb(tArr);
       });
     });

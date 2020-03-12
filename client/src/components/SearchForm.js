@@ -30,12 +30,33 @@ function SearchForm(props) {
   const endStation     = () => {return(props.stations.populated? props.stations.list[props.stations.endIndex  ].stationId   : '');}
   const endName        = () => {return(props.stations.populated? props.stations.list[props.stations.endIndex  ].stationName : '');}
   const minStationDist = () => {return(props.stations.populated? props.stations.minStationDist.toPrecision(3)               : '');}
+  const dayText        = () => {
+    return(
+      props.searchOptions.useTime === 0 ?
+        ('Search all days')
+      : 
+        (props.searchOptions.useTime === 1 ?
+          ('Search weekdays')
+        :
+          ('Search weekends')    
+    ));
+  }
   const profileText    = () => {
-    return(props.user.userName ? 
-      (`Use user profile? ${props.searchOptions.useProfile ? 'profile' : 'all users'}`) 
+    return(
+      !props.user.userName ?
+        ('click for LogIn to use profile')
       :
-      ('click for LogIn to use profile')
-    );
+        (props.searchOptions.useGender && props.searchOptions.useAge ?
+          ('Search by: gender+age')
+        :
+          (props.searchOptions.useGender ?
+            ('Search by: gender')
+          : 
+            (props.searchOptions.useAge ?
+              ('Search by: age')
+            :  
+              ('Find all rides')
+    ))));
   }
 
   // page render - SearchForm
@@ -81,20 +102,20 @@ function SearchForm(props) {
         </div>
         <button id="toggle-box-time"
           name="useTime"
-          onClick={props.handleToggle}
+          onClick={props.handleCycle}
         >
-          Use day & time? {props.searchOptions.useTime ? 'day of week' : 'anytime'}
+          {dayText()}
         </button>
         {/* Need a logged in user to have profile information */}
         <button id="toggle-box-profile"
           name="useProfile"
-          onClick={props.handleToggle}
+          onClick={props.handleCycle}
         >
           {profileText()}
         </button>
         <button id="toggle-box-location"
           name="chooseStart"
-          onClick={props.handleToggle}
+          onClick={props.handleCycle}
         >
           Map click: {props.mapOptions.chooseStart ? 'start' : 'destination'}
         </button>

@@ -1,5 +1,5 @@
 .chart-summary {
-  height: 50px;
+  height: 25px;
   text-align: center;
   margin: auto;
   margin-top: 10px;
@@ -13,8 +13,45 @@
 }
 
 #waitMsg {
-  margin-top:  50%;
+  margin-top: 50%;
   margin-left: 10%;
   font-size: 24px;
   font-weight: 750;
+}
+
+#chartAvgByHr,
+#chartTripsByHr {
+
+}
+#chartAvgByHr {
+  top: 5px;
+}
+#chartTripsByHr {
+  top: 220px;
+}
+
+.button-swap-left,
+.button-swap-right {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  height: 20px;
+  width: 25px;
+  margin-top: 0px;
+  padding: 0px 0px 0px 0px;
+  text-align: center;
+  color: black;
+  background-color: lightgray;
+  border: 1px solid black;
+  border-radius: 5px;
+  box-shadow: 1px 1px lightgray;
+}
+.button-swap-left:hover,
+.button-swap-right:hover {
+  height: 22px;
+  width: 28px;
+}
+.button-swap-left:focus,
+.button-swap-right:focus {
+  outline: none;
 }

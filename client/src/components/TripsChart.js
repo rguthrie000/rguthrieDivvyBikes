@@ -1,13 +1,17 @@
 import React from "react";
 import timeSvcs from "../utils/timeSvcs"
 import { 
-    VictoryBar, VictoryChart, VictoryAxis, VictoryTheme 
+    VictoryBar, VictoryChart, VictoryAxis, VictoryTheme, VictoryLine, VictoryClipContainer, VictoryScatter
   } from "victory";
 import "./TripsChart.css"
 
 export default function TripsChart(props) {
-  const chartStyle = {
+  const chartStyle1 = {
     width: '100%',
+    height: 'auto'
+  };
+  const chartStyle2 = {
+    width:  '88%',
     height: 'auto'
   };
 
@@ -19,8 +23,14 @@ export default function TripsChart(props) {
       ) :
       (
         <div className="chart-summary">
-          Most Ride Times: <span id="average">{props.plot.modeDuration}{props.plot.nextBin? ` - ${props.plot.nextBin}`: ''}</span>
-          <div id="canvas" style={chartStyle}>
+          {props.plot.plotTripsByDur ?
+          (<div id="canvas1" style={chartStyle1}>
+            <button 
+              className="button-swap-right"
+              name="swapPlot" 
+              onClick={props.swapPlots}
+            >&rarr;</button>
+            Most Ride Times: <span id="average">{props.plot.modeDuration}{props.plot.nextBin? ` - ${props.plot.nextBin}`: ''}</span>
             <VictoryChart 
               domainPadding={10} 
               theme={VictoryTheme.material} 
@@ -40,11 +50,56 @@ export default function TripsChart(props) {
                 y={"trips"}
               />
             </VictoryChart>
-          </div>
-          <div className="chart-detail">
-            <p id="std-dev">trips: {props.plot.trips ? props.plot.trips:'-'},
-              standard deviation: {props.plot.stdDevDuration ? props.plot.stdDevDuration:'-'}</p>
-          </div>
+            <div className="chart-detail">
+              <p id="std-dev">trips: {props.plot.trips ? props.plot.trips:'-'},
+                standard deviation: {props.plot.stdDevDuration ? props.plot.stdDevDuration:'-'}</p>
+            </div>
+          </div>)
+          :  
+          (<div id="canvas2">
+            <button 
+              className="button-swap-left" 
+              name="swapPlot" 
+              onClick={props.swapPlots}
+            >&larr;</button>
+            <div id="chartAvgByHr" style={chartStyle2}>
+              <VictoryChart
+              >
+                <VictoryAxis
+                  tickValues={props.plot.labelsDur}
+                />
+                <VictoryAxis
+                  dependentAxis
+                  tickFormat={(x) => (`${timeSvcs.makeMinutesAndSeconds(x)}`)}
+                  fixLabelOverlap
+                />
+                <VictoryScatter
+                  height={180}
+                  groupComponent={<VictoryClipContainer clipPadding={{ top: 5, right: 10 }}/>}
+                  style={{ data: { stroke: "#c43a31", strokeWidth: 15, strokeLinecap: "round" } }}
+                  data={props.plot.pointsDur}
+                />
+              </VictoryChart>
+              <VictoryChart
+              >
+                <VictoryAxis
+                  label='hour of the day'
+                  tickValues={props.plot.labelsDur}
+                />
+                <VictoryAxis
+                  dependentAxis
+                  tickFormat={(x) => (`${x}`)}
+                  fixLabelOverlap
+                />
+                <VictoryLine
+                  height={180}
+                  groupComponent={<VictoryClipContainer clipPadding={{ top: 5, right: 10 }}/>}
+                  style={{ data: { stroke: "#c43a31", strokeWidth: 15, strokeLinecap: "round" } }}
+                  data={props.plot.pointsCt}
+                />
+              </VictoryChart>
+            </div>  
+          </div>)}
         </div>
       )}
     </>

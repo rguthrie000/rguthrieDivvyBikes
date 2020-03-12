@@ -79,10 +79,22 @@ export default {
     //     genderMale
     //     birthYear
     //     ageTol
+
+    // day of week options
+    const ALL_DAYS = 0;
+    // const WEEKDAYS = 1;  // these are not explicitly referenced
+    // const WEEKENDS = 2;
+
+    // gender & age options -- these are not explicitly referenced
+    // const ALL_TRIPS   = 0;
+    // const USE_GENDER  = 1;
+    // const USE_AGE     = 2;
+    // const USE_PROFILE = 3;
     const [searchOptions,setSearchOptions] = useState({
-      useTime     : false,  // restrict query by time of week (weekday or weekends+holidays) or use all times
-      useProfile  : false,  // restrict query by gender+age or find all rides
-      ageTol      : 5       // age half-window width (if useProfile, find only birthYear-ageTol to birthYear+ageTol)
+      useTime     : ALL_DAYS, // restrict query by time of week (weekday or weekends+holidays) or use all times
+      useGender   : false,    // restrict query by gender
+      useAge      : false,    // restrict query by age
+      ageTol      : 5         // age half-window width (if useProfile, find only birthYear-ageTol to birthYear+ageTol)
     });
 
     // stations is the set of variables used for the main elements used in the Map and for searching.
@@ -124,7 +136,11 @@ export default {
       nextBin        : '',
       stdDevDuration : '',
       labels         : [],
-      binTrips       : []
+      binTrips       : [],
+      labelsDur      : [],
+      pointsDur      : [],
+      pointsCt       : [],
+      plotTripsByDur : true
     });
 
     // dbReady states and state variable
@@ -144,25 +160,27 @@ export default {
         if (!stations.list.length) {
           setInterval(clock,1000);
           setDbOkay(DB_UNKNOWN);
-          tripsAPI.getDBready(dbReadyResponse);
           tripsAPI.getStations(setStationsList);
           tripsAPI.checkLogin(loginResponse);
         } else {
-          tripsAPI.getTrips(
-            stations.list[stations.startIndex].stationId,
-            stations.list[stations.endIndex  ].stationId,
-            searchOptions,
-            user,
-            processTrips
-          );
-          setQueryWait({queryWait: true, waitTimer: 0});
+          if (!queryObj.queryWait) {
+            tripsAPI.getTrips(
+              stations.list[stations.startIndex].stationId,
+              stations.list[stations.endIndex  ].stationId,
+              searchOptions,
+              user,
+              processTrips
+            );
+            setQueryWait({queryWait: true, waitTimer: 0});
+          }
         }
       },
-      // look for change in search options   
+      // look for change in search options or user   
       [searchOptions]
     );      
 
     function setStationsList(stationArr) {
+      tripsAPI.getDBready(dbReadyResponse);
       let closestStation = geoMath.findClosestStation(stations.location,stationArr);
       setStations({
         ...stations,
@@ -290,52 +308,78 @@ export default {
           nextBin        : '',
           stdDevDuration : '--:--',
           labels         : [],
-          binTrips       : []
+          binTrips       : [],
+          labelsDur      : [],
+          pointsDur      : [],
+          pointsCt       : []
         });
       } else {  
-        let resultsObj = tripsAnalysis.tripsByDuration(trips);
+        let resultsObj   = tripsAnalysis.tripsByDuration(trips);
+        let durationsObj = tripsAnalysis.durationsByHourOfDay(trips);
         setStatsAndCharts({
           ...statsAndCharts,
-          trips           : resultsObj.trips,
-          modeDuration    : resultsObj.modeDuration, 
-          nextBin         : resultsObj.nextBin,
-          stdDevDuration  : resultsObj.stdDevDuration,
-          labels          : resultsObj.labels,
-          binTrips        : resultsObj.binTrips
+          trips          : resultsObj.trips,
+          modeDuration   : resultsObj.modeDuration, 
+          nextBin        : resultsObj.nextBin,
+          stdDevDuration : resultsObj.stdDevDuration,
+          labels         : resultsObj.labels,
+          binTrips       : resultsObj.binTrips,
+          labelsDur      : durationsObj.labels,
+          pointsDur      : durationsObj.pointsDur,
+          pointsCt       : durationsObj.pointsCt
         });
       }
       setQueryWait({queryWait: false, waitTimer: 0});
     }
 
-    function handleToggle(event) {
+    function handleCycle(event) {
       event.preventDefault();
-      switch (event.target.name) {
-        case 'chooseStart': 
-          setMapOptions({
-            ...mapOptions,
-            chooseStart : mapOptions.chooseStart? false : true
-          });
-          break;
-        case 'useTime': 
-          setSearchOptions({
-            ...searchOptions,
-            useTime : searchOptions.useTime ? false : true
-          });
-          break;
-        case 'useProfile': 
-          if (user.userName) {
+      if (!queryObj.queryWait) {
+        switch (event.target.name) {
+          case 'swapPlot':
+            setStatsAndCharts({
+              ...statsAndCharts,
+              plotTripsByDur : statsAndCharts.plotTripsByDur? false : true
+            });
+            break;
+          case 'chooseStart': 
+            setMapOptions({
+              ...mapOptions,
+              chooseStart : mapOptions.chooseStart? false : true
+            });
+            break;
+          case 'useTime': 
+            // advance through ALL_DAYS, WEEKDAYS, and WEEKENDS, with wraparound
             setSearchOptions({
               ...searchOptions,
-              useProfile : searchOptions.useProfile ? false : true
+              useTime : (searchOptions.useTime + 1) % 3
             });
-          } else {
-            setUser({
-              ...user,
-              showLogin : true
-            });  
-          }
-          break;
-        default: break;
+            break;
+          case 'useProfile': 
+            if (user.userName) {
+              // from above -
+              // const ALL_TRIPS   = 0;
+              // const USE_GENDER  = 1;
+              // const USE_AGE     = 2; 
+              // const USE_PROFILE = 3;  // i.e. both true
+              let nextOption = 
+                ((searchOptions.useGender? 1 : 0) +
+                (searchOptions.useAge   ? 2 : 0) + 1) % 4;
+              if (debug) {console.log(`useGender: ${nextOption % 2 ? true:false}, useAge ${nextOption > 1}`)};   
+              setSearchOptions({
+                ...searchOptions,
+                useGender : nextOption % 2 ? true : false,
+                useAge    : nextOption > 1 ? true : false
+              });
+            } else {
+              setUser({
+                ...user,
+                showLogin : true
+              });  
+            }
+            break;
+          default: break;
+        }
       }
     };
 
@@ -520,14 +564,15 @@ export default {
                   user          ={user}
                   dbOkay        ={dbOkay}
                   whereAmI      ={whereAmI}
-                  handleToggle  ={handleToggle}
+                  handleCycle   ={handleCycle}
                 />)}
             </div>
             {/* 1a0 - second row - TripsChart */}
             <div className="row chart-card">
               <TripsChart
-                query ={queryObj}
-                plot  ={statsAndCharts}
+                query     ={queryObj}
+                plot      ={statsAndCharts}
+                swapPlots ={handleCycle}
               />
             </div>
           </div>

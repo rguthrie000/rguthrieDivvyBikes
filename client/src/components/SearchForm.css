@@ -81,6 +81,9 @@ label {
     width: 110px;
     height: 40px;
 }
+.button-random:focus {
+  outline: none;
+}
 #dbRed {
   background-color: red;
 }
@@ -190,6 +193,11 @@ button {
 #toggle-box-location:hover {
   height: 105px;
   width: 105px;
+}
+#toggle-box-time:focus,
+#toggle-box-profile:focus,
+#toggle-box-location:focus {
+  outline: none;
 }
 
 /* Responsive coding using breakpoints */
