@@ -1,7 +1,8 @@
 import React from "react";
 import timeSvcs from "../utils/timeSvcs"
 import { 
-    VictoryBar, VictoryChart, VictoryAxis, VictoryTheme, VictoryLine, VictoryClipContainer, VictoryScatter
+    VictoryChart, VictoryBar, VictoryLine, VictoryScatter,  
+    VictoryAxis, VictoryLabel, VictoryTheme, VictoryClipContainer
   } from "victory";
 import "./TripsChart.css"
 
@@ -65,23 +66,7 @@ export default function TripsChart(props) {
             <div id="chartAvgByHr" style={chartStyle2}>
               <VictoryChart
               >
-                <VictoryAxis
-                  tickValues={props.plot.labelsDur}
-                />
-                <VictoryAxis
-                  dependentAxis
-                  tickFormat={(x) => (`${timeSvcs.makeMinutesAndSeconds(x)}`)}
-                  fixLabelOverlap
-                />
-                <VictoryScatter
-                  height={180}
-                  groupComponent={<VictoryClipContainer clipPadding={{ top: 5, right: 10 }}/>}
-                  style={{ data: { stroke: "#c43a31", strokeWidth: 15, strokeLinecap: "round" } }}
-                  data={props.plot.pointsDur}
-                />
-              </VictoryChart>
-              <VictoryChart
-              >
+                <VictoryLabel text="Rides by Hour" x={250} y={30} textAnchor="middle"/>
                 <VictoryAxis
                   label='hour of the day'
                   tickValues={props.plot.labelsDur}
@@ -96,6 +81,25 @@ export default function TripsChart(props) {
                   groupComponent={<VictoryClipContainer clipPadding={{ top: 5, right: 10 }}/>}
                   style={{ data: { stroke: "#c43a31", strokeWidth: 15, strokeLinecap: "round" } }}
                   data={props.plot.pointsCt}
+                />
+              </VictoryChart>
+              <VictoryChart
+              >
+                <VictoryLabel text="Average Duration by Hour" x={250} y={30} textAnchor="middle"/>
+                <VictoryAxis
+                  label='hour of the day'
+                  tickValues={props.plot.labelsDur}
+                />
+                <VictoryAxis
+                  dependentAxis
+                  tickFormat={(x) => (`${timeSvcs.makeMinutesAndSeconds(x)}`)}
+                  fixLabelOverlap
+                />
+                <VictoryScatter
+                  height={180}
+                  groupComponent={<VictoryClipContainer clipPadding={{ top: 5, right: 10 }}/>}
+                  style={{ data: { stroke: "#c43a31", strokeWidth: 15, strokeLinecap: "round" } }}
+                  data={props.plot.pointsDur}
                 />
               </VictoryChart>
             </div>  
