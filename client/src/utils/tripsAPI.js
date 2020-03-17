@@ -1,54 +1,67 @@
-// tripServer.js - client-side interface to our server
-// for retrieval of User info, Stations, and Trips.
+// tripsAPI.js - client-side interface to our server
+// for use of the Users, Stations, and Trips collections.
+//
+// All of the queries use callback functions to indicate
+// completion and pass back any results.
+//
 import axios    from "axios";
 import timeSvcs from "./timeSvcs";
-// import {debug} from "../debug"
 
 export default  {
   
+  // API Key function *********************************************************
+
+  // fetch the Google Maps API key
   getKey : (cb) => {
     axios.get("/api/getkey").then( (res) => {
       cb(res.data);
     });  
   },
 
+  // DB functions *************************************************************
+
+  // fetch db status
   getDBready : (cb) => {
     axios.get("/api/dbready").then( (res) => {
       cb(res.data);
     }
   )},
 
+  // fetch the stations list
   getStations : (cb) => {
   axios.get('/api/stations').then( (res) => { 
       let stationArr = [];
+      // create an array of objects where each object is a station.
       res.data.forEach( (s) => {
         stationArr.push({
           stationId   : s.stationId,
           stationName : s.stationName,
-          docks       : s.docks, 
+          docks       : s.docks,        // future use
           stationLat  : s.stationLat,
           stationLon  : s.stationLon
         });
       })
+      // return the array
       cb(stationArr);
    })
    .catch( (err) => console.log(err));
   },
 
-  // getTrips() 
-  // expected elements in req.body      input arguments
+  // getTrips() specifies and requests a Trips query, then implements
+  // weekday/weekend filtering on the results.
+  //
+  // server expects (req.body):         source in input arguments:
   //   startStation                       startId
   //   endStation                         endId
-  //   useGender, and if 1:               searchOptions.useProfile
+  //   useGender, and if 1:               searchOptions.useGender
   //     genderMale                       user.genderMale
-  //   useBirthYear, and if 1:            searchOptions.useProfile
+  //   useBirthYear, and if 1:            searchOptions.useAge
   //     birthYear                        user.birthYear
   //     ageTol                           searchOptions.ageTol
   //
   // used to further filter the response:
   //   useTime                            searchOptions.useTime
-  //     isWeekday                        timeAndDate.isWeekday
-
+  //
   getTrips : (startId,endId,searchOptions,user,cb) => {
     let queryObj = {
       startStation : startId,
@@ -59,13 +72,13 @@ export default  {
       birthYear    : user.birthYear,
       ageTol       : searchOptions.ageTol 
     };
-
-    let tArr = [];
-
     // we want trips from start-to-dest, and dest-to-start, 
     // but not start-to-start, and not dest-to-dest.
 
-    // so begin with start to dest
+    // tArr will accumulate results from both queries
+    let tArr = [];
+
+    // begin with start to dest
     axios.post("/api/trips", queryObj).then( (res) => {
 
       res.data.forEach( (t) => tArr.push({startTime: t.startTime, tripDuration: t.tripDuration}));
@@ -85,17 +98,22 @@ export default  {
         if (searchOptions.useTime !== ALL_DAYS) {
           tArr = timeSvcs.filterTimeOfWeek(tArr,searchOptions.useTime);
         }
+        // return the array via callback
         cb(tArr);
       });
     });
   },
 
+  // Authentification functions ***********************************************
+
+  // see if a session exists
   checkLogin: (cb) => {
     axios.get("/api/checkUser").then ( (res) => {
       cb(res.data);
     })
   },
 
+  // try a login
   postLogin : (userObj,cb) => {
     let postObj = {
       userName: userObj.userName,
@@ -106,22 +124,30 @@ export default  {
     });
   },
 
+  // try a signup
   postSignup : (userObj,cb) => {
     axios.post("/api/signup",userObj).then( (res) => {
       cb(res.data);
     });
   },
 
+  // log the user out
   getLogout : (cb) => {
     axios.get("/api/logout").then( (res) => {
       cb(res.data);
     });
   },
 
+  // delete the user
   getDelete : (userName,cb) => {
     axios.get(`/api/userdelete/${userName}`).then( (res) => {
       cb(res.data);
     });
   }
+
+  // user edits of userName, password or profile information -- 
+  // since only gender and birthYear are saved, and delete is supported
+  // with a dedicated button, user edits are supported by delete, then
+  // signup with changed values.
 
 }

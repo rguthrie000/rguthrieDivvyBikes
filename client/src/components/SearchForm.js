@@ -1,9 +1,13 @@
+// SearchForm.js - information/options component for Divvy Bikes Planner
 import React from "react";
 import "./SearchForm.css";
 
-function SearchForm(props) {
+export default function SearchForm(props) {
 
-  // Helper Functions
+  // Helper Functions ********************************************************
+
+  // These must all resolve/return a value so they will integrate with the 
+  // rendering jsx which uses them.
   const DB_BAD          = 0;
   const DB_GOOD         = 1;
   const DB_UNKNOWN      = 2;
@@ -123,5 +127,3 @@ function SearchForm(props) {
     </>
   );
 }
-
-export default SearchForm;

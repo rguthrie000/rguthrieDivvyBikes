@@ -1,10 +1,11 @@
-// checkModel() - counts records in Trips and Stations tables, and loads them if not full.
-// Offers a dbReady() function to report whether the tables are fully loaded in the db.
+// checkModel() - counts records in Trips and Stations tables, and loads them if
+// not full. Offers a dbReady() function to report whether the tables are fully
+// loaded in the db. Look for MAINTAIN string below for anticipated maintenance
+// points when database changes
 
 const fs         = require('fs');
 const path       = require('path');
 const readline   = require('readline');
-const mongoose   = require('mongoose');
 const csv        = require('csv-parser');
 const db         = require("../models");
 const debug      = require("../debug");
@@ -22,12 +23,12 @@ let dbReadyState = {
 }
 
 // dbWorker variables used in status reporting
-const totalTrips    = 5827718; // required number of records in the Trips Collection
-let   tripsCount    = 0;       // initial count of records in Trips Collection
-let   trips         = 0;       // cumulative count of desired records from Divvy trip records
-let   tripsToLoad   = 0;       // trips goal for the files which have been opened
-let   tripsPosting  = 0;       // count of records which are in-process with the MongoDB server
-let   tripsQueue    = [];      // internal Q for buffering file records destined for MongoDB
+const totalTrips    = 5827718; // MAINTAIN - records in the Trips Collection
+let   tripsCount    = 0;       // initial count in Trips Collection
+let   trips         = 0;       // cumulative count of Divvy trip records
+let   tripsToLoad   = 0;       // trips goal for the files opened
+let   tripsPosting  = 0;       // count in-process records at MongoDB
+let   tripsQueue    = [];      // internal Q for buffering records
 
 module.exports = {
 
@@ -47,22 +48,29 @@ module.exports = {
   checkModel : () => {
 
     // dbWorker variables which aren't part of status reporting
-    const totalStations = 611;
-    const totalChunks   = 59;   // count of files which collectively comprise 2018-2019 Divvy trip records
-    let   chunksToLoad  = 0;    // down-counter for files remaining to be loaded
-    let   tHandle;              // timer handle; saved at timer registration to be used at de-registration
+    const totalStations = 611;    // MAINTAIN
+    const totalChunks   = 59;     // MAINTAIN count of 'chunked' files
+    const chunkFileRecs = 100000; // default number of records per chunkfile
+    let   chunksToLoad  = 0;      // down-counter for files not yet loaded
+    let   tHandle;                // timer handle; saved at timer registration
 
-    // startDBworker() initializes dbWorker, which wakes periodically to supervise the process
-    // of fetching files and regulating the submission of their records to MongoDB.  
+    // dbWorker machine parameters
+    const intervalTimeMs     = 500;   // run each half-second (2 Hz)
+    const tripsPostingTopOff = 10000; // on each service, top-up the count
+    const mongoPacketLimit   = 1000;  // per mongo docs
+
+    // startDBworker() initializes dbWorker, which wakes periodically to 
+    // supervise the process of fetching files and regulating the submission
+    // of their records to MongoDB.  
     function startDBworker() {
       // start the interval timer
-      tHandle = setInterval(dbWorker,500);
+      tHandle = setInterval(dbWorker,intervalTimeMs);
       if (debug) {console.log('dbWorker started');}
       // init the file down-counter
       chunksToLoad = totalChunks;
       // start the first file read. note post-decrement of chunksToLoad.
       loadAFile(totalChunks - chunksToLoad--);
-      tripsToLoad = 100000;
+      tripsToLoad = chunkFileRecs;
     }
 
     // dbWorker() is the periodic service for the DB loading process. 
@@ -77,20 +85,24 @@ module.exports = {
       if (debug) {
         console.log(`dbWorker: trips ${trips} tripsToLoad ${tripsToLoad} inQ ${inQ} inPost ${tripsPosting}`);
       }
-      while (tripsPosting < 10000 && inQ > 0) {
-        // MongoDB will take 'insertMany' of 1000 records without incurring 
-        // extra management on their side.  So make as many posts of 1000 as
-        // needed to have at least 10000 total records pending with MongoDB.
-        let postCt = (inQ >= 1000 ? 1000 : inQ);
+      while (tripsPosting < tripsPostingTopOff && inQ > 0) {
+        // MongoDB will take 'insertMany' of mongoPacketLimit records without
+        // incurring extra management on their side.  So make as many posts of
+        // mongoPacketLimit as needed to have at least tripsPostingTopOff total
+        // records pending with MongoDB.
+        let postCt = (inQ >= mongoPacketLimit ? mongoPacketLimit : inQ);
         if (postCt > 0) {
-          postAThousand(postCt);
+          postMongoPacket(postCt);
         }  
         // and track them coming out of tripsQueue
         inQ -= postCt;
       }  
-      if (inQ < 100000 && chunksToLoad > 0 && (tripsToLoad - trips < 100000)) {
+      if (inQ < chunkFileRecs && 
+          chunksToLoad > 0      && 
+         (tripsToLoad - trips < chunkFileRecs)) {
         let filePrefix = totalChunks - chunksToLoad--;
-        tripsToLoad += filePrefix < totalChunks-1? 100000 : (totalTrips % 100000);
+        tripsToLoad += filePrefix < totalChunks-1? 
+          chunkFileRecs : (totalTrips % chunkFileRecs);
         loadAFile(filePrefix);
       }
       if (!chunksToLoad && !inQ && !tripsPosting) {
@@ -101,9 +113,9 @@ module.exports = {
       }
     }
 
-    // postAThousand() dequeues records from the internal queue and posts
+    // postMongoPacket() dequeues records from the internal queue and posts
     // them to the db server.
-    function postAThousand(count) {
+    function postMongoPacket(count) {
       // simple queue implementation; dequeue from the front using
       // slice() to get to a named piece of the array suitable for the 
       // database post, then using splice() to remove those records
@@ -118,31 +130,22 @@ module.exports = {
       });
     }
 
-    // genDivvyFilename() takes a file indicator and uses it to name the 
-    // corresponding file from the set of files comprising the trip records.
-    function genDivvyFilename(fileIndicator) {
-      if ((fileIndicator < 0) || (fileIndicator > totalChunks-1)) {
-        return(`genDivvyFilename: argument ${fileIndicator} is out of range 0 - ${totalChunks-1}`);
-      }
-      if (fileIndicator < 10) {
-        return(`0${fileIndicator}-Divvy.csv`);
-      }   
-      return( `${fileIndicator}-Divvy.csv`);
-    }
-
     // loadAFile() uses the indicated filename prefix to open a file, read
     // and filter its records, and push the screened records into the queue. 
     function loadAFile(fileCtr) {
       // use secret decoder to get the filename for this iteration
-      let rdFileBase = genDivvyFilename(fileCtr);
+      let rdFileBase = `${fileCtr < 10? '0':''}${filectr}-Divvy.csv`;
       if (debug) {console.log(`${rdFileBase} --> inQ`);}         
       let rdFile = path.join(__dirname,`./chunked/${rdFileBase}`);
+
       // this loop will run on each line in the input file
       let lArr = [];
-
-      readline.createInterface({input: fs.createReadStream(rdFile)}).on('line', (line) => {
+      readline.
+      createInterface({input: fs.createReadStream(rdFile)}).
+      on('line', (line) => {
         lArr = line.split(',');
-        // map from file columns to database properties (see '../models/trips.js').
+        // map from file columns to database properties 
+        // (see '../models/index.js').
         if (lArr[0] !== 'startTime') {
           tripsQueue.push({
             startTime    : lArr[0],
@@ -162,8 +165,8 @@ module.exports = {
       // Trips trial
       // structure a query using the first record in the Collection
       const queryCheck = {
-        startTime     : 1514805120000,
-        tripDuration  : 323,
+        startTime     : 1514805120000,    //MAINTAIN (all properties)
+        tripDuration  : 323,              
         startStation  : 69,
         endStation    : 159,
         genderMale    : 1,
@@ -180,7 +183,9 @@ module.exports = {
         } else {
           if (!res.length) {
             dbReadyState.TripsCollection = false;
-            if (debug) {console.log('Trips: trial query failed - response empty.');}
+            if (debug) {
+              console.log('Trips: trial query failed - response empty.');
+            }
           } else {
             if (  
               res[0].startTime    == queryCheck.startTime    && 
@@ -190,7 +195,9 @@ module.exports = {
               res[0].genderMale   == queryCheck.genderMale   && 
               res[0].birthYear    == queryCheck.birthYear     ) {
             } else {  
-              if (debug) {console.log(res,'Trips: trial query failed - response incorrect.');}
+              if (debug) {
+                console.log(res,'Trips: trial failed - response incorrect.');
+              }
               dbReadyState.TripsCollection = false;
             }
           }
@@ -198,11 +205,11 @@ module.exports = {
         // Stations trial
         db.Stations.find({}).exec( (err, data) => {
           if (err) {
-            if (debug) {console.log(err,'Stations: trial query failed - error.');}
+            if (debug) {console.log(err,'Stations: trial failed - error.');}
             dbReadyState.StationsCollection = false;
           } else {
             if (data.length != totalStations) {
-              if (debug) {console.log('Stations: trial query failed - not all Stations returned.');}
+              if (debug) {console.log('Stations: trial failed - Stations.');}
               dbReadyState.StationsCollection = false;
             }
           } // end Stations trial
@@ -212,19 +219,15 @@ module.exports = {
 
     //* Start of Execution ***************
     
-    //* Play area ************************
-
-            // < JS execution sandbox ></JS>
-
     //* Users ****************************
 
-    db.Users.countDocuments({}, (e,usersCount) => {
+    db.Users.countDocuments({}, (e,usersCt) => {
       if (debug) {
         console.log(
-          `Users:          ${usersCount}${usersCount < 1? ', need at least 1':''}`
+          `Users:          ${usersCt}${usersCt < 1? ', need at least 1':''}`
         );
       }
-      if (usersCount >= 1) {
+      if (usersCt >= 1) {
         dbReadyState.UsersCollection = true;
       } else {
         // Users is empty. Need 1 user for a trial Query! 
@@ -235,11 +238,11 @@ module.exports = {
           birthYear  : 1959
         })
         .then((err,rowsAffected) => {
-          // rowsAffected is an array whose first element is the number of rows affected.
-          // here we expect either creation of one row, or zero rows if the userName
-          // is not unique. 
+          // rowsAffected is an array whose first element is the number of rows
+          // affected. here we expect either creation of one row, or zero rows
+          // if the userName is not unique. 
           dbReadyState.UsersCollection = rowsAffected? true : false;
-          if (debug) {console.log(`Users:    Loaded (created user 'ChicagoDog').`)}
+          if (debug) {console.log(`Users:    Loaded (created 'ChicagoDog').`)}
         })
         .catch( (err) => {
           if (debug) {console.log(err);}
@@ -252,13 +255,13 @@ module.exports = {
 
     // evaluate the Stations model. 
     // nothing to do if all of the records are present
-    db.Stations.countDocuments({}, (e,stationsCount) => {
+    db.Stations.countDocuments({}, (e,statCt) => {
       if (debug) {
         console.log(
-          `Stations:     ${stationsCount}${stationsCount<totalStations? `, need ${totalStations}`:''}`
-        );
+          `Stations:     ${statCt}`);
+        console.log(`${statCt<totalStations? `need ${totalStations}`:''}`);
       }
-      if (stationsCount == totalStations) {
+      if (statCt == totalStations) {
         dbReadyState.StationsCollection = true;
       } else {
         // Stations is either empty or missing records. 
@@ -307,12 +310,13 @@ module.exports = {
         dbReadyState.TripsCollection = true;
         trialQuery();
       } else {  
-        //Trips is either empty or missing records. 
-        //deleteMany({}) will 'clean-slate' Trips, but will take a long time
-        //if Trips was nearly full.  So avoid deleteMany if possible.
+        // Trips is either empty or missing records. 
+        // deleteMany({}) will truncate Trips, but will take a long time
+        // if Trips was nearly full.  So avoid deleteMany if possible;
+        // i.e. if count is already 0, don't deleteMany({}).
         if (!tripsCount) {
-          // use dbWorker to regulate the process of fetching records from files
-          // and sending them to MongoDB.
+          // use dbWorker to regulate the process of fetching records from 
+          // files and sending them to MongoDB.
           startDBworker();
         } else {  
           if (debug) {console.log('Trips: truncating');}
@@ -323,8 +327,7 @@ module.exports = {
           });  
         }
       }
-    }); 
-        
+    });       
   }  
 
 }

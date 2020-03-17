@@ -1,28 +1,31 @@
-// server.js - Divvy Bikes Planner server-side entry point and initialization file.
+// server.js - Divvy Bikes Planner: server-side entry point and initialization
+// file.
 //
-// This version of server.js is (nearly) generic for a MERN application with 
-// User Authentication via passport/express-session.
-//
-// Three passwords/keys are needed for full functionality of this app:
+// Two passwords/keys are needed for full functionality of this app:
 //
 //   REACT_APP_GEOKEY is the Google Maps API key
-//   passwordKeyPhrase is the session 'secret' for user authentication
 //   passwordMongodb is the MongoDB Atlas password
 //
-// On heroku, the first two values are provided as 'Config Vars', and the
-// third is provided by changing the MONGODB_URI environment variable to
-// be the full DB access URL provided by MongoDB Atlas. That URL embeds 
-// passwordMongodb.
+// On heroku, the first values is provided as a 'Config Var', and the
+// second is provided by changing the MONGODB_URI environment variable to
+// be the full DB access URL provided by MongoDB Atlas. (That URL embeds 
+// passwordMongodb.)
 
 //********************
 //*   Dependencies   *
 //********************
+
+// master variable to control console logging.
 const debug = require("./debug");
 
 // Requiring necessary npm packages
 const path         = require('path');
 const express      = require('express');
-const {checkModel} = require('./config/checkModel.js');
+
+// and other files (routes and models are associated below)
+const {checkModel} = require('./models/checkModel.js');
+
+// and environment variables
 require("dotenv").config();
 
 //***************

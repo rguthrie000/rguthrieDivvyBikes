@@ -1,4 +1,4 @@
-// cleanDivvy.js - Bike Planner support tool, a standalone program to
+// cleanDivvy.js - Bike Planner support tool. A standalone program to
 // read Divvy .csv files, filter out broken and non-subscriber records,
 // massage data into desired format, sort, then save as a number of
 // sequentially ordered files. cleanDivvy is needed ultimately because
@@ -7,20 +7,20 @@
 // also prep the data to save effort in Bike Planner? 
 //
 // The Divvy .csv files are *mostly* in start-time order, but this is
-// not strict.  To insure monotonically increasing start-times in the
+// not strict. To insure monotonically increasing start-times in the
 // database, all of the 'raw' .csv files are read, with resulting 
 // 'good' records kept as POJOs in a single array. This array is then
 // sorted.  
 //
-// To ensure space for working with the large number of records, the
-// heap allocation is increased prior by invoking the program with:
+// *@*@ TO ENSURE SPACE FOR WORKING WITH THE LARGE NUMBER OF RECORDS, *@*@
+// *@*@ INCREASE THE HEAP ALLOCATION BY INVOKING cleanDivvy WITH:     *@*@
 //
 //   node --max-old-space-size=8192 cleanDivvy.js 
 // 
 // Note that this is not an option for deployed applications, so yet
 // another reason to pre-process the raw files before deployment.
 //
-// Start times are only kept with 1-minute resolution, so there are
+// Start times are only provided with 1-minute resolution, so there are
 // many records with non-unique start times. This is addressed after
 // the sort by adding a sequential number of milliseconds to each 
 // non-unique start time.  Suppose three records have the same start
@@ -43,7 +43,7 @@
 //      assign start(n+2) = start(n+1)+1.
 //    result: Record n+2 has start time x+2
 //
-// Then all three records which had the same start-time in the 
+// Then all three records which had the same start time in the 
 // .csv file will have unique start times in the database.
 // For this scheme to break, 60000 rides would have to have started
 // in the same minute.  There aren't that many bikes.
@@ -51,7 +51,9 @@
   const fs       = require('fs');
   const path     = require('path');
   const readline = require('readline');
-
+  // because of their size, these files are not pushed to
+  // GitHub (bad things would happen - .git would remember that
+  // the push failed, and will never think the branch is clean.)
   const csvFiles = [
     "Divvy_Trips_2018_Q1",
     "Divvy_Trips_2018_Q2",
@@ -63,10 +65,12 @@
     "Divvy_Trips_2019_Q4"
   ];
 
-  const fileLimit = 100000;
+  // fileLimit is arbitrary, but should be the same as chunkFileRecs in 
+  // ./checkModel.js 
+  const fileLimit = 100000;    // MAINTAIN
   const wrHeader =
     'startTime,tripDuration,startStation,endStation,genderMale,birthYear';
-  const totalTrips = 5827718;
+  const totalTrips = 5827718;  // MAINTAIN
   let trips        =  0;
   let tripsQueue   = [];
   var outLine      = '';
@@ -105,11 +109,16 @@
   // for CDT <--> CST transitions.
   function tCSVtoUTC( id, s ) {
     const DSTtransitions = [
-      17855346,  //      trip id < this number --> CST (Win 2018    ), add 21600 seconds to get GMT
-      21419851,  // else trip id < this number --> CDT (Spr, Sum '18), add 18000 seconds to get GMT
-      22021259,  // else trip id < this number --> CST (F'18, Win'19), add 21600 seconds to get GMT
-      25615852   // else trip id < this number --> CDT (Spr, Sum '19), add 18000 seconds to get GMT
-                 // else                       --> CST (Fall 2019+  ), add 21600 seconds to get GMT
+      17855346,  //      trip id < this number --> CST (Win 2018    ), 
+                 //        add 21600 seconds to get GMT
+      21419851,  // else trip id < this number --> CDT (Spr, Sum '18),
+                 //        add 18000 seconds to get GMT
+      22021259,  // else trip id < this number --> CST (F'18, Win'19), 
+                 //        add 21600 seconds to get GMT
+      25615852   // else trip id < this number --> CDT (Spr, Sum '19), 
+                 //        add 18000 seconds to get GMT
+                 // else                       --> CST (Fall 2019+  ), 
+                 //        add 21600 seconds to get GMT
     ];
     // input format of s is date and time like so: '2020-01-01 14:35'
     // slice & dice, shake & bake...and remember, JS months are offset by 1.
@@ -118,15 +127,16 @@
     let dy = parseInt(s.slice( 8,10));
     let hr = parseInt(s.slice(11,13));
     let mn = parseInt(s.slice(14,16));
-    // convert to a GMT date-time string as a waypoint towards seconds-since-1970.  
+    // convert to a GMT date-time as a waypoint towards seconds-since-1970.
     let d = new Date(yr,mo,dy,hr,mn,0,0);
     // getTime() converts to milliseconds since 1970-01-01 00:00:00.000.
     let CentralTimeMs = d.getTime();
     // to get to absolute GMT time, we must adjust for timezone offset -- which
     // changes in Spring and Fall to/from Daylight Saving Time.
-    // the 'fall back' transition produces ambiguous local time because the hour
-    // from 0100 - 0200 repeats. To resolve this, the DSTtransitions array was
-    // determined by inspecting the trips at the DST transitions in the Divvy files. 
+    // the 'fall back' transition produces ambiguous local time because the 
+    // hour from 0100 - 0200 repeats. To resolve this, the DSTtransitions 
+    // array was determined by inspecting the trips at the DST transitions in 
+    // the Divvy files. 
 
     // Adjust so that the return value is GMT, a.k.a. UTC.
     if      (id < DSTtransitions[0]) {return(CentralTimeMs+21600000);}
@@ -224,27 +234,32 @@ cleanDivvy(); function cleanDivvy() {
     console.log(`<-- ${rdFileBase}`);
     rdFile = path.join(__dirname,rdFileBase);
 
-    // this is a loop control statement.  the loop will iterate on each line in the input file.
-    // the raw file columns are:
-    //      0          1         2        3         4               5
-    //   trip_id, start_time, end_time, bikeid, tripduration, from_station_id, 
+    // this is a loop control statement.  the loop will iterate on each line in
+    // the input file. the raw file columns are:
+    //   0         1        2       3         4              5
+    //trip_id,start_time,end_time,bikeid,tripduration,from_station_id, 
     //
-    //      6                     7             8              9        10       11
-    //   from_station_name, to_station_id, to_station_name, usertype, gender, birthyear
+    //       6                7             8            9       10      11
+    //from_station_name,to_station_id,to_station_name,usertype,gender,birthyear
     //
-    readline.createInterface({input: fs.createReadStream(rdFile)}).on('line', (line) => {
-      // CSV file, so split-on-comma to separate the cell contents into an array of strings
+    readline.
+    createInterface({input: fs.createReadStream(rdFile)}).
+    on('line', (line) => {
+      // CSV file, so split-on-comma to separate the cell contents into an 
+      // array of strings
       lArr = line.split(',');    
 
       // ignore the header
       if (lArr[0] !== 'trip_id') {
 
-        // handle the weirdness where tripDuration *sometimes* has quotes and an internal comma
-        // (that's right, it violates CSV cell separation rules by using a comma that's not
-        // a cell separator. )  our split-on-comma will have put this value into two locations,
-        // so alignment of lArr and our output string will be off by one element.
-        // Example -- instead of trip duration of '1891', the csv value is "1,891.00", giving
-        // us '"1' and '891.00"'.  Ugly.  A leading " in the string tells us this happened.
+        // handle the weirdness where tripDuration *sometimes* has quotes and 
+        // an internal comma (that's right, it violates CSV cell separation 
+        // rules by using a comma that's not a cell separator.)  our 
+        // split-on-comma will have put this value into two locations, so 
+        // alignment of lArr and our output string will be off by one element.
+        // Example -- instead of trip duration of '1891', the csv value is 
+        // "1,891.00", giving us '"1' and '891.00"'.  Ugly.  A leading " in 
+        // the string tells us this happened.
         let dt = 0;
         if (lArr[4][0] !== '"') {
           // ahh, a 'normal' tripduration cell
@@ -266,13 +281,20 @@ cleanDivvy(); function cleanDivvy() {
         // so, if a Subscriber...
         if (lArr[9].toLowerCase() === 'subscriber') {
           let startTime = tCSVtoUTC(lArr[0],lArr[1]);
+          // MAINTAIN
           if (startTime >= 1514805120000 && startTime < 1577876220003) {
-            if (dt <= 28800) {                                               // 8 hour tripDuration limit
-              if (lArr[5] && (lArr[5] > 0 && lArr[5] < 700)) {               // startStation must be in 1..699
-                if (lArr[7] && (lArr[7] > 0 && lArr[7] < 700)) {             // endStation must be in 1..699
-                  if (lArr[10]) {                                            // gender must be non-empty 
-                    let gender = lArr[10].toLowerCase() === 'male'? 1:0;     // gender --> genderMale Boolean
-                    if (lArr[11] && (lArr[11] > 1900 && lArr[11] < 2018)) {  // age must be in 2..110 
+            // 8 hour tripDuration limit
+            if (dt <= 28800) {
+              // startStation must be in 1..699
+              if (lArr[5] && (lArr[5] > 0 && lArr[5] < 700)) {             
+                // endStation must be in 1..699
+                if (lArr[7] && (lArr[7] > 0 && lArr[7] < 700)) {
+                  // gender must be non-empty
+                  if (lArr[10]) {
+                    // gender --> genderMale Boolean
+                    let gender = lArr[10].toLowerCase() === 'male'? 1:0;
+                    // age must be in 2..110
+                    if (lArr[11] && (lArr[11] > 1900 && lArr[11] < 2018)) {
                       tripsQueue.push({
                         startTime    : startTime,
                         tripDuration : dt,

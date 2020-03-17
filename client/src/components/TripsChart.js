@@ -1,3 +1,5 @@
+
+// TripsChart.js - charts component for Divvy Bikes Planner
 import React from "react";
 import timeSvcs from "../utils/timeSvcs"
 import { 
@@ -7,10 +9,15 @@ import {
 import "./TripsChart.css"
 
 export default function TripsChart(props) {
+  
+  // Victory style settings for responsive charts
   const chartStyle1 = {
     width: '100%',
     height: 'auto'
   };
+  // this style is used for the stacked hour of day line and scatter charts.
+  // because aspect is preserved, height is reduced along with width so that
+  // both stacked charts fit in the allocated space
   const chartStyle2 = {
     width:  '88%',
     height: 'auto'
@@ -33,7 +40,7 @@ export default function TripsChart(props) {
             >&rarr;</button>
             Most Ride Times: <span id="average">{props.plot.modeDuration}{props.plot.nextBin? ` - ${props.plot.nextBin}`: ''}</span>
             <VictoryChart 
-              domainPadding={10} 
+              domainPadding={0} 
               theme={VictoryTheme.material} 
             >
               <VictoryAxis

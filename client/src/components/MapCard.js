@@ -1,3 +1,4 @@
+// MapCard.js - Google Map component for Divvy Bikes Planner
 import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import "./MapCard.css";
@@ -6,6 +7,8 @@ export default function MapCard({geoKey, stations, mapClick}) {
   
   const defaultProps = { center: {lat: 41.9, lng: -87.65}, zoom: 11 };
 
+  // the Station subcomponent is parameterized for placement and
+  // styling.
   const Station = (props) => (
     <div style={{
       color: props.textColor ? props.textColor : 'white', 

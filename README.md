@@ -1,16 +1,17 @@
 # rguthrieDivvyBikes
 Plan your Divvy Bike ride in Chicago using the Divvy Bikes Planner!
 
-Map-based application to show historical trip times for trips between starting and 
-ending Bike Stations of your choice.  The app mines 5.8M records of trip data for 
-2018 and 2019 provided by Divvy.
+Map-based application to show historical trip times for trips between starting
+and ending Bike Stations of your choice. The app mines 5.8M records of bike 
+trips data for 2018 and 2019 provided by Divvy.
 
-This a MERN app; the server is Express/Node JS using MongoDB to serve the list of stations
-and trip information, and the client is a React app using the Google Maps API for the 
-Chicago map.  
+This a MERN app; the server is Express/Node JS using MongoDB to serve the list
+of stations and trip information, and the client is a React app using the Google
+Maps API for the Chicago map.  
 
-The package was initialized from a MERN template stored on GitHub.  This template was built by
-the react package's create-react-app script for the npm CLI.  
+The package was initialized from a MERN template stored on GitHub.  This 
+template was built by the react package's create-react-app script for the npm 
+CLI.  
 
 The app is deployed on GitHub pages at:
 
@@ -24,21 +25,21 @@ https://ancient-harbor-54367.herokuapp.com
 
 # Design Notes
 
-File App.js is the state and HTML body file. Custom React components for the Search Form 
-(SearchForm), the interactive Map (MapCard) and the output chart (TripsChart) are used within
-the HTML body in App.
+File App.js is the state and HTML body file. Custom React components for the 
+Search Form (SearchForm), the interactive Map (MapCard) and the output chart 
+(TripsChart) are used within the HTML body in App.
 
 Data flows down to the components using the 'conventional' props process.  
 
 The create-react-app script supplied with the react package was used to create 
-the startup and initial HTML file. A bootstrap.com link was added to the index.HTML file, 
-and the utils/API file was created, but otherwise only the files in /src are 
-application-specific.
+the startup and initial HTML file. A bootstrap.com link was added to the 
+index.HTML file, and the utils/API file was created, but otherwise only the 
+files in /src are application-specific.
 
 ## This application was developed with:
 VS Code - Smart Editor for HTML/CSS/JS
 node.js - JavaScript command-line interpreter
-Google Chrome Inspector - inspection/analysis tools integrated in Chrome Browser.
+Google Chrome Inspector - inspection/analysis tools in the Chrome Browser.
 react - middleware for optimized DOM manipulation and integrated JSX coding.
 github - version control, content repository.
 heroku - web deployment, including database hosting.

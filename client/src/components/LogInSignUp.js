@@ -1,7 +1,8 @@
+// LoginSignUp.js - Login / Signup dialog component for Divvy Bikes Planner
 import React from "react";
 import "./LogInSignUp.css";
 
-function LogInSignUp(props) {
+export default function LogInSignUp(props) {
   return (
     <div className="loginsignup">  
         <h4>Sign Up or Log In</h4>
@@ -57,5 +58,3 @@ function LogInSignUp(props) {
     </div>
   );
 }
-
-export default LogInSignUp;

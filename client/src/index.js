@@ -1,4 +1,5 @@
-// c
+// index.js - Bike Planner client side start-up logic 
+// (index.html has no content)
 import tripsAPI              from "./utils/tripsAPI";
 import React                 from "react";
 import ReactDOM              from "react-dom";
@@ -13,7 +14,12 @@ import "./index.css";
 tripsAPI.getKey(startReact);
 
 function startReact(key) {
+  // copy the key into the namespace of the React app
   App.postKey(key);
+
+  // and start React
   ReactDOM.render(<App.App />, document.getElementById("root"));
+
+  // establish client side caching
   registerServiceWorker();
 };
