@@ -78,6 +78,7 @@ module.exports = function(app) {
             genderMale: "",
             birthYear: ""
           };
+          if (debug) {console.log(`login attempt: incorrect password, ${JSON.stringify(data)}`)}
         } else {
           // matched name and password - establish login with currentUserName
           // and return profile information

@@ -100,7 +100,7 @@ const StationSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema({
   userName      : {type: String, unique: true},
-  password      : {type: String, minlength: 8},
+  password      : {type: String},
   genderMale    : {type: Boolean},
   birthYear     : {type: Number, min:   1920, max:  2017}
 });

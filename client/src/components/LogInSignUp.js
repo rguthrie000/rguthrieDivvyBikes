@@ -11,8 +11,8 @@ export default function LogInSignUp(props) {
             <div>
                 <input
                   className="form-input"
-                  value={props.user.userName}
-                  name="userName"
+                  value={props.user.userNameTmp}
+                  name="userNameTmp"
                   type="text"
                   placeholder="user name"
                   onChange={props.handleFormChange}
@@ -21,18 +21,18 @@ export default function LogInSignUp(props) {
             <div>
                 <input
                   className="form-input"
-                  value={props.user.password}
-                  name="password"
-                  type="password"
-                  placeholder="password (8+ chars)"
+                  value={props.user.passwordTmp}
+                  name="passwordTmp"
+                  type="text"
+                  placeholder="password"
                   onChange={props.handleFormChange}
                 />
             </div>
             <div>
                 <input
                   className="form-input"
-                  value={props.user.gender}
-                  name="gender"
+                  value={props.user.genderTmp}
+                  name="genderTmp"
                   type="text"
                   placeholder="gender (sign up)"
                   onChange={props.handleFormChange}
@@ -41,8 +41,8 @@ export default function LogInSignUp(props) {
             <div>
                 <input
                   className="form-input"
-                  value={props.user.birthYear}
-                  name="birthYear"
+                  value={props.user.birthYearTmp}
+                  name="birthYearTmp"
                   type="text"
                   placeholder="birth year (sign up)"
                   onChange={props.handleFormChange}

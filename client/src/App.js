@@ -66,12 +66,16 @@ export default {
     // current user login and profile information - also
     // has state information for login sequence and display
     const [user,setUser] = useState({
-      userName  : '',
-      password  : '',
-      gender    : '',
-      birthYear : '',
-      lastTry   : '',
-      showLogin : false
+      userName     : '',
+      password     : '',
+      gender       : '',
+      birthYear    : '',
+      lastTry      : '',
+      showLogin    : false,
+      userNameTmp  : '',
+      passwordTmp  : '',
+      genderTmp    : '',
+      birthYearTmp : ''
     });
 
     // toggle setting for action of a click on the map
@@ -437,12 +441,16 @@ export default {
     function loggedOut(msg) {
       if (debug) {console.log(`log out ${msg}`);}
       setUser({
-        userName  : '',
-        password  : '',
-        gender    : '',
-        birthYear : '',
-        lastTry   : '',
-        showLogin : false
+        userName     : '',
+        password     : '',
+        gender       : '',
+        birthYear    : '',
+        lastTry      : '',
+        showLogin    : false,
+        userNameTmp  : '',
+        passwordTmp  : '',
+        genderTmp    : '',
+        birthYearTmp : ''
       })
     }
 
@@ -451,11 +459,11 @@ export default {
     function handleDelete() {
       tripsAPI.getLogout(deleteUser);
     }
-    const deleteUser   = (msg)  => {
-      if (msg  === 'logged out') tripsAPI.getDelete(user.userName,verifyDelete);
+    const deleteUser = (msg)  => {
+      if (msg === 'logged out') tripsAPI.getDelete(user.userName,verifyDelete);
     }
     const verifyDelete = (data) => {
-      if (data === 'deleted'   ) loggedOut('deleted');
+      if (data === 'deleted') loggedOut('deleted');
     }
 
     // handleLogBtn() supports the Login/Logout button.
@@ -490,16 +498,29 @@ export default {
     // user re-think the decision to login/signup
     function handleFormDismiss(event) {
       event.preventDefault();
-      setUser({
-        userName  : '',
-        password  : '',
-        gender    : '',
-        birthYear : '',
-        lastTry   : '',
-        showLogin : false
-      });
+      loggedOut();
     }
     
+    // handleFormSubmit() services the 'submit' button on the Login form
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      // the form is only available when no one's logged in. 
+      // first, try login using username and password 
+      if (user.userNameTmp) {
+        // then setup and submit login
+        let userObj = {
+          userName   : user.userNameTmp,
+          password   : user.passwordTmp,
+          genderMale : '',
+          birthYear  : ''
+        };
+        console.log(`handleFormSubmit, TRY_LOGIN: `,JSON.stringify(userObj));   
+        tripsAPI.postLogin(userObj,loginResponse);
+        // set the state variable for the next call (assumes login will fail)
+        formState = TRY_SIGNUP;
+      }
+    }
+
     // loginResponse() is the callback for a login or signup request.
     // see handleFormSubmit()
     const TRY_LOGIN = 0;
@@ -509,78 +530,62 @@ export default {
       console.log('loginResponse: ',JSON.stringify(respObj));
       // if login success or signup success, response will be 'loggedIn'
       if (respObj.result === 'loggedIn') {
-        // setup for next time
-        formState = TRY_LOGIN;
-        // and set the user info
+        // set the user info
         setUser({
           ...user,
-          userName  : respObj.userName,
-          gender    : respObj.genderMale ? 'male' : 'not male',
-          birthYear : respObj.birthYear,
-          showLogin : false
+          userName     : respObj.userName,
+          gender       : respObj.genderMale ? 'male' : 'not male',
+          birthYear    : respObj.birthYear,
+          lastTry      : 'logged in',
+          showLogin    : false,
+          userNameTmp  : '',
+          passwordTmp  : '',
+          genderTmp    : '',
+          birthYearTmp : ''
         });
+        // and setup for next time
+        formState = TRY_LOGIN;
       } else {
-        // not 'loggedIn'. see handleFormSubmit(); formState is set to 
-        // TRY_SIGNUP as part of login attempt -- so passing this test...
-        if (formState === TRY_SIGNUP && respObj.result === 'not found') {
-          // means userName not found. so check the profile information and 
-          // post a signup.
-          console.log(`handleFormSubmit (entry), TRY_SIGNUP: `,JSON.stringify(user));        
-          // set formState for next time
+        // not 'loggedIn'. see handleFormSubmit(); formState was set to 
+        // TRY_SIGNUP as part of login attempt
+        if (formState === TRY_SIGNUP) {
+          // only one chance to sign up - set formState for next time
           formState = TRY_LOGIN;
-          // check the profile information
-          if (user.userName && user.password.length > 7 && user.gender && user.birthYear) {
-            let genderStr = user.gender.toLowerCase();
-            let genderMale = (genderStr === 'male' || genderStr === 'm');
-            if (user.birthYear < 1920 || user.birthYear > 2017) {
-              // with possible no-signup because of bad info.
-              setUser({
-                ...user,
-                lastTry   : 'invalid profile'
-              })
-            } else {
-              // ok, sign up.
-              let userObj = {
-                userName   : user.userName,
-                password   : user.password,
-                genderMale : genderMale,
-                birthYear  : user.birthYear
-              };
-              console.log(`handleFormSubmit, TRY_SIGNUP: `,JSON.stringify(userObj));        
-              tripsAPI.postSignup(userObj,loginResponse);
-            }  
-          }  
-        } else {
-          // this is the path for an incorrect password
-          setUser({
-            ...user,
-            userName  : '',
-            password  : '',
-            gender    : '',
-            birthYear : '',
-            lastTry   : respObj.result
-          });
-        }
-      }
-    }
-
-    // handleFormSubmit() services the 'submit' button on the Login form
-    function handleFormSubmit(event) {
-      event.preventDefault();
-      // the form is only available when no one's logged in. 
-      // first, try login using username and password 
-      if (user.userName && user.password.length > 7) {
-        // set the state variable for the next call (assumes login will fail)
-        formState = TRY_SIGNUP;
-        // then setup and submit login
-        let userObj = {
-          userName   : user.userName,
-          password   : user.password,
-          genderMale : '',
-          birthYear  : ''
-        };
-        console.log(`handleFormSubmit, TRY_LOGIN: `,JSON.stringify(userObj));   
-        tripsAPI.postLogin(userObj,loginResponse);
+          if (respObj.result === 'incorrect password') {
+            // indicate incorrect password, but don't change the input fields
+            setUser({
+              ...user,
+              lastTry : 'password mismatch'
+            })
+          } else {
+            if (respObj.result === 'not found') {
+              // userName wasn't found. so check the profile information 
+              // and post a signup.
+              if (debug) {console.log(`handleFormSubmit, TRY_SIGNUP: `,JSON.stringify(user));}
+              // check the profile information
+              let genderStr = user.genderTmp.toLowerCase();
+              let genderMale = (genderStr === 'male' || genderStr === 'm');
+              if (!user.birthYearTmp || user.birthYearTmp < 1920 || user.birthYearTmp > 2017) {
+                // with possible no-signup because of bad info.
+                // again, leave entry fields as they were
+                setUser({
+                  ...user,
+                  lastTry : 'birth year? (1920-2017)'
+                })
+              } else {
+                // ok, sign up.
+                let userObj = {
+                  userName   : user.userNameTmp,
+                  password   : user.passwordTmp,
+                  genderMale : genderMale,
+                  birthYear  : user.birthYearTmp
+                };
+                console.log(`handleFormSubmit, TRY_SIGNUP: `,JSON.stringify(userObj));        
+                tripsAPI.postSignup(userObj,loginResponse);
+              }  
+            }
+          }
+        }      
       }
     }
 
@@ -622,6 +627,7 @@ export default {
               Delete
             </button>
           </div>
+          <p id="profile">{user.userName ? `${user.gender}, ${user.birthYear}` : ''}</p>
           <h1 className="AppBar-title">Bike Chicago!</h1>
         </div>
         {/* 1. bottom row - two columns */}

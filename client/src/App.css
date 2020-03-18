@@ -33,6 +33,16 @@
   color: yellow;
   font-size: 10px;
 }
+
+#user {  
+  position : absolute;
+  top: 40px;
+  left: 317px;
+  width: 150px;
+  text-align: center;
+  color: white;
+}
+
 .button-box {
   position: relative;
   top: -30px;
@@ -68,9 +78,9 @@
   left: 390px;
 }
 
-#user {  
+#profile {  
   position : absolute;
-  top: 40px;
+  top: 115px;
   left: 317px;
   width: 150px;
   text-align: center;
