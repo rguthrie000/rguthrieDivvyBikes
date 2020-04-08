@@ -287,6 +287,7 @@ export default {
         if (debug) {console.log(`random start: lat ${loc.lat}, lon ${loc.lon}; startStation ${startId}, endStation ${endId}`);}
       }  
     }
+    
 
     // mapClick() handles choice of new location or new destination.
     // the arguments are the map coordinates in pixels and calculated
